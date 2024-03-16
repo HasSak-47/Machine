@@ -70,6 +70,7 @@ class Instruction{
 public:
 	static const u64 size;
 	virtual void execute(CPU& cpu, MemoryDevice& device) = 0;
+	virtual ~Instruction() = default;
 };
 
 }

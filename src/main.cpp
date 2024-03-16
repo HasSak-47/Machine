@@ -73,5 +73,19 @@ i32 main(){
 	computer.cpu.add_instruction(MOV_RM_CODE, new MOV_RM());
 	computer.cpu.add_instruction(MOV_MR_CODE, new MOV_MR());
 	computer.cpu.add_instruction(MOV_MM_CODE, new MOV_MM());
+
+	const u8 code[] = {
+		MOV_MR_CODE, 0x00, 0x40, 0x00, // move to register 0 from memory at address 0x40
+		MOV_RR_CODE, 0x01, 0x00, // move to register 1 from register 0
+		MOV_RM_CODE, 0x01, 0x41, 0x01, // move to memory at address 0x40 from register 1
+		MOV_MM_CODE, 0x00, 0x00, 0x40, 0x00, // move to memory at address 0x00 from memory at address 0x40
+	};
+
+	while (!computer.cpu.end){
+		MemoryWriter writer(computer.memory);
+		writer.write((u8*)code, sizeof(code));
+		computer.cpu.tick(computer.memory);
+	}
+
 	return 0;
 }
