@@ -1,10 +1,13 @@
 #include <generic.hpp>
+#include <memory.hpp>
+
 #include <iomanip>
 #include <ios>
 #include <iostream>
 #include <ostream>
+#include <vector>
 
-enum class Instruction : u8{
+enum class InstructionCode : u8{
 	// Move from A to B
 	// MOV TYPES
 	// 0x00 : Register to Register
@@ -16,82 +19,92 @@ enum class Instruction : u8{
 	MOV_MR = 0x02, // RGS MEM
 	MOV_MM = 0x03, // DST SRC
 	
-
+	// OP reg0, reg1 -> reg2
     ADD, SUB,
     MUL, DIV,
 
+	// Cmp reg0, reg1
     CMP,
+	// JMP reg0 if Condition
 	JNE, JE,
 	JG, JGE,
 	JL, JLE,
 
+	// JMP reg0
 	JMP,
 
+	// HLT
     INT,
 	DED,
 };
 
 class InstructionHandler{
 public:
-	Instruction code = Instruction::DED;
-	u32 arg1_size = 0;
-	u32 arg2_size = 0;
+	InstructionCode code = InstructionCode::DED;
+	virtual void write_to_memory(MemoryWriter& device) = 0;
+	virtual ~InstructionHandler() = default;
 };
 
-
-let mov_rr = InstructionHandler{Instruction::MOV_RR, 1, 1};
-let mov_rm = InstructionHandler{Instruction::MOV_RM, 1, 2};
-let mov_mr = InstructionHandler{Instruction::MOV_MR, 1, 2};
-let mov_mm = InstructionHandler{Instruction::MOV_MM, 2, 2};
-
-
-class MemoryDevice8{
+class MOV_RR : public InstructionHandler{
+private:
+	u8 dst = 0;
+	u8 src = 0;
 public:
-	virtual u8 read(u64 address) const = 0 ;
-	virtual void write(u64 address, u8 data) = 0;
-	virtual u64 get_size() const = 0;
-};
-
-std::ostream &operator<<(std::ostream &os, const MemoryDevice8 &device){
-	u64 size = device.get_size();
-	os << "MemoryDevice8 " << size << std::endl;
-	// print hex dump of mem
-	for (u64 i = 0; i < size; i++) {
-		// set hex output with double 0
-		os << std::hex << std::setfill('0') << std::setw(2);
-		os << (int)device.read(i) << " ";
-		if (i % 16 == 15) os << std::endl;
+	MOV_RR(u8 dst, u8 src) : dst(dst), src(src) { code = InstructionCode::MOV_RR; }
+	void write_to_memory(MemoryWriter& writer) override {
+		writer.write((u8)code);
+		writer.write(dst);
+		writer.write(src);
 	}
-	// reset output
-	os << std::dec << std::endl;
+};
 
-	return os;
-}
-
-struct RAM : public MemoryDevice8{
-	u8* data;
-	u64 size;
-
-	RAM(u64 size){
-		this->size = size;
-		this->data = new u8[size];
+/** Moves from register to memory */
+class MOV_RM : public InstructionHandler{
+private:
+	u8 reg = 0;
+	u16 address = 0;
+public:
+	// moves from register to memory
+	MOV_RM(u8 reg, u16 address) : reg(reg), address(address) { code = InstructionCode::MOV_RM; }
+	void write_to_memory(MemoryWriter& writer) override {
+		writer.write((u8)code);
+		writer.write(reg);
+		writer.write((u8)(address & 0xFF));
+		writer.write((u8)(address >> 8));
 	}
-	~RAM(){ delete[] data; }
-
-	u8 read(u64 address) const override
-		{ return data[address]; }
-	void write(u64 address, u8 data) override
-		{ this->data[address] = data; }
-	u64 get_size() const override
-		{ return size; }
 };
 
-struct MemoryWriter{
-	u64 ptr = 0;
-	MemoryDevice8& device;
-	MemoryWriter(MemoryDevice8& device) : device(device) {}
-	void write(u8 data){ device.write(ptr++, data); }
+/** Moves from memory to register */
+class MOV_MR : public InstructionHandler{
+private:
+	u8 reg = 0;
+	u16 address = 0;
+public:
+	// moves to register from memory
+	MOV_MR(u8 reg, u16 address) : reg(reg), address(address) { code = InstructionCode::MOV_MR; }
+	void write_to_memory(MemoryWriter& writer) override {
+		writer.write((u8)code);
+		writer.write(reg);
+		writer.write((u8)(address & 0xFF));
+		writer.write((u8)(address >> 8));
+	}
 };
+
+class MOV_MM : public InstructionHandler{
+private:
+	u16 address1 = 0;
+	u16 address2 = 0;
+public:
+	MOV_MM(u16 address1, u16 address2) : address1(address1), address2(address2) { code = InstructionCode::MOV_MM; }
+	void write_to_memory(MemoryWriter& writer) override {
+		writer.write((u8)code);
+		writer.write((u8)(address1 & 0xFF));
+		writer.write((u8)(address1 >> 8));
+		writer.write((u8)(address2 & 0xFF));
+		writer.write((u8)(address2 >> 8));
+	}
+};
+
 
 struct CPU {
 	u8 registers[16] = {};
@@ -109,24 +122,24 @@ struct CPU {
 };
 
 void CPU::tick(MemoryDevice8& device){
-	Instruction instruction = (Instruction)device.read(ptr++);
+	InstructionCode instruction = (InstructionCode)device.read(ptr++);
 	switch ( instruction ) {
-		case Instruction::MOV_RR: {
+		case InstructionCode::MOV_RR: {
 			u8 reg1 = device.read(ptr++);
 			u8 reg2 = device.read(ptr++);
 			registers[reg1] = registers[reg2];
 		} break;
-		case Instruction::MOV_RM: {
+		case InstructionCode::MOV_RM: {
 			u8 reg = device.read(ptr++);
 			u16 address = 0;
 			for (u8 i = 0; i < 2; i++) 
 				address |= device.read(ptr++) << (i * 8);
-			registers[reg] = device.read(address);
+			device.write(address, registers[reg]);
 		} break;
-		case Instruction::MOV_MR: 
+		case InstructionCode::MOV_MR: 
 			this->mov_mr(device);
 		break;
-		case Instruction::MOV_MM: {
+		case InstructionCode::MOV_MM: {
 			u16 address1 = 0;
 			for (u8 i = 0; i < 2; i++) 
 				address1 |= device.read(ptr++) << (i * 8);
@@ -136,7 +149,7 @@ void CPU::tick(MemoryDevice8& device){
 			device.write(address2, device.read(address1));
 		}
 		break;
-		case Instruction::DED:
+		case InstructionCode::DED:
 			end = true;
 		default:
 			break;
@@ -154,31 +167,27 @@ std::ostream &operator<<(std::ostream &os, const CPU &cpu){
 
 i32 main(){
 	RAM ram(256);
-	MemoryWriter writer = MemoryWriter(ram);
-	writer.write(MOV_MR);
-	writer.write(0);   // move to register 0
-	writer.write(128); // from memory address 128
-	writer.write(0);
-	writer.write(MOV_RR);
-	writer.write(1); // move to register 1
-	writer.write(0); // from register 0
-	writer.write(MOV_MM);
-	writer.write(128); // from address 128
-	writer.write(0);
-	writer.write(0); // move to address 0
-	writer.write(0);
-	
-	
-	writer.write(DED); // end
+	MemoryWriter writer(ram);
+	std::vector<InstructionHandler*> code;
+	code.push_back(new MOV_MR(0, 128));
+	code.push_back(new MOV_RR(1, 0));
+	code.push_back(new MOV_RM(1, 129));
+	code.push_back(new MOV_MM(128, 0));
 
-	ram.write(128, 0x10);
+	for (auto &instruction : code) {
+		instruction->write_to_memory(writer);
+		delete instruction;
+	}
 
-
+	writer.write((u8)InstructionCode::DED);
+	ram.write(128, 0x40);
 	CPU cpu;
+	std::cout << ram << std::endl;
 	while (!cpu.end) {
 		std::cout << cpu << std::endl;
 		cpu.tick(ram);
 	}
 	std::cout << ram << std::endl;
+
 	return 0;
 }
