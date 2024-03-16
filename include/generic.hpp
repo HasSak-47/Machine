@@ -1,7 +1,7 @@
 #ifndef __GENERIC_HPP__
 #define __GENERIC_HPP__
 
-#include <cstdint>
+#include <stdint.h>
 
 #define make_typedef(p)\
 typedef uint##p##_t u##p;\
@@ -17,6 +17,14 @@ typedef double f64;
 
 #define let const auto
 #define mut auto
+
+#include <string>
+#include <vector>
+
+template<typename T>
+using Vec = std::vector<T>;
+
+typedef std::string String;
 
 #endif
 

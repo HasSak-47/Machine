@@ -1,0 +1,4 @@
+[project]
+name = "vm_cpp"
+version = "0.0.0"
+edition = "0.1.0"
