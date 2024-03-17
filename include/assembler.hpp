@@ -23,7 +23,7 @@ inline void assemble(std::string path){
 		while(true){
 			mut found = line.find(' ');
 			if (found != std::string::npos) break;
-			arg_ends.push_back(std::stoull(line));
+			arg_ends.push_back(line.size() - 1);
 		}
 		std::vector<std::string> args = {};
 		for (u64 i = 0; i < arg_ends.size(); i++){
