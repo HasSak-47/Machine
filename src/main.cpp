@@ -105,9 +105,9 @@ i32 main(){
 	ram.write(0, (u8*)code, sizeof(code));
 	ram.write_byte(0x40, 0x10);
 	std::cout << computer << '\n';
-	// while (!cpu.end){
-	// 	cpu.tick(ram);
-	// }
+	while (!cpu.end){
+		cpu.tick(ram);
+	}
 
 
 	return 0;
