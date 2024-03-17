@@ -110,7 +110,7 @@ class Instruction{
 public:
 	virtual void execute(CPU& cpu, MemoryDevice& device) = 0;
 	virtual u64 size() const = 0;
-	virtual char* name() const = 0;
+	virtual const char* name() const = 0;
 	virtual ~Instruction() = default;
 };
 

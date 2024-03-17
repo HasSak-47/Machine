@@ -23,81 +23,43 @@ enum InstructionCode{
 #define MAKE_INSTRUCTION(NAME, SIZE, SOURCENAME, CODENAME, FUNC_BODY)\
 class NAME : public Instruction{ public: \
 	static const InstructionCode CODE = CODENAME;\
-	static const char* SOURCE_NAME = "SOURCENAME";\
+	static constexpr char SOURCE_NAME[] = SOURCENAME;\
 	u64 size() const override { return SIZE; }\
 	const char* name() const override { return SOURCE_NAME; }\
 	void execute(CPU& cpu, MemoryDevice& memory) override FUNC_BODY \
 };
 
-MAKE_INSTRUCTION(MOV_RR, 2, "MOV", MOV_RR_CODE, {
+MAKE_INSTRUCTION(MOV_RR, 2, "MOV %xr %xr", MOV_RR_CODE, {
 	u8 reg1 = memory.read_byte(cpu.ptr + 1);
 	u8 reg2 = memory.read_byte(cpu.ptr + 2);
 	cpu.registers[reg1] = cpu.registers[reg2];
 });
 
-// class MOV_RR : public Instruction{
-// public:
-// 	static const u64 SIZE = 2;
-// 	static const InstructionCode CODE = MOV_RR_CODE;
-// 	void execute(CPU& cpu, MemoryDevice& memory) override{
-// 		u8 reg1 = memory.read_byte(cpu.ptr + 1);
-// 		u8 reg2 = memory.read_byte(cpu.ptr + 2);
-// 		cpu.registers[reg1] = cpu.registers[reg2];
-// 	}
-// 
-// 	u64 size() const override { return SIZE; }
-// };
+MAKE_INSTRUCTION(MOV_RM, 3, "MOV %xr %x", MOV_RM_CODE, {
+	u8 reg = memory.read_byte(cpu.ptr + 1);
+	u8 addr = memory.read_byte(cpu.ptr + 2);
+	u8 data = memory.read_byte(addr);
+	cpu.registers[reg] = data;
+});
 
-class MOV_RM : public Instruction{
-public:
-	static const u64 SIZE = 3;
-	static const InstructionCode CODE = MOV_RM_CODE;
-	void execute(CPU& cpu, MemoryDevice& memory) override{
-		u8 reg = 0;
-		u16 address = 0;
-		memory.read(cpu.ptr + 1, &reg, 1);	
-		memory.read(cpu.ptr + 2, (u8*)&address, 2);
-		memory.write(address, (u8*)&cpu.registers[reg], 1);
-		
+MAKE_INSTRUCTION(MOV_MR, 3, "MOV %xr %x", MOV_MR_CODE, {
+	u8 addr = memory.read_byte(cpu.ptr + 1);
+	u8 reg = memory.read_byte(cpu.ptr + 2);
+	u8 data = cpu.registers[reg];
+	memory.write_byte(addr, data);
+});
 
-	}
+MAKE_INSTRUCTION(MOV_MM, 4, "MOV %x %x", MOV_MM_CODE, {
+	u8 addr1 = memory.read_byte(cpu.ptr + 1);
+	u8 addr2 = memory.read_byte(cpu.ptr + 2);
+	u8 data = memory.read_byte(addr2);
+	memory.write_byte(addr1, data);
+});
 
-	u64 size() const override { return SIZE; }
-};
+MAKE_INSTRUCTION(DED, 0, "DED", DED_CODE, {
+	cpu.end = true;
+});
 
-class MOV_MR : public Instruction{
-public:
-	static const u64 SIZE = 3;
-	static const InstructionCode CODE = MOV_MR_CODE;
-	void execute(CPU& cpu, MemoryDevice& memory) override{
-		u8 reg = 0;
-		u16 address = 0;
-		memory.read(cpu.ptr + 1, &reg, 1);	
-		memory.read(cpu.ptr + 2, (u8*)&address, 2);
-		u8 mem = 0;
-		memory.read(address, &mem, 1);
-		cpu.registers[reg] = mem;
-	}
-
-	u64 size() const override { return SIZE; }
-};
-
-class MOV_MM : public Instruction{
-public:
-	static const u64 SIZE = 4;
-	static const InstructionCode CODE = MOV_MM_CODE;
-	void execute(CPU& cpu, MemoryDevice& memory) override{
-		u16 address1 = 0;
-		u16 address2 = 0;
-		memory.read(cpu.ptr + 1, (u8*)&address1, 2);
-		memory.read(cpu.ptr + 3, (u8*)&address2, 2);
-		u8 mem = 0;
-		memory.read(address1, &mem, 1);
-		memory.write(address2, &mem, 1);
-	}
-
-	u64 size() const override { return SIZE; }
-};
 
 // operate content from r0 and r1 and store in r2
 class AritmeticOperation : public Instruction {
@@ -106,28 +68,23 @@ public:
 	void execute(CPU& cpu, MemoryDevice& memory) override { 
 		cpu.registers[2] = this->operate(cpu.registers[0], cpu.registers[1]);
 	}
+	const char* name() const override { return "UnreachableAritmeticOperation"; }
 	u64 size() const override final { return SIZE; }
 	virtual u8 operate(u8 a, u8 b) = 0;
 };
 
-#define MAKE_OPERATION(NAME, CODENAME, OP)\
+#define MAKE_OPERATION(NAME, SOURCENAME, CODENAME, OP)\
 class NAME : public AritmeticOperation{ public: \
 	static const InstructionCode CODE = CODENAME; \
+	static constexpr char SOURCE_NAME[] = SOURCENAME; \
 	u8 operate (u8 a, u8 b) override { return a OP b; } \
+	const char* name() const override final { return SOURCE_NAME; } \
 };
 
-MAKE_OPERATION(AddOperation, ADD_CODE, +);
-MAKE_OPERATION(SubOperation, SUB_CODE, -);
-MAKE_OPERATION(MulOperation, MUL_CODE, *);
-MAKE_OPERATION(DivOperation, DIV_CODE, /);
-
-
-class DED : public Instruction {
-public:
-	static const u64 SIZE = 0;
-	void execute(CPU& cpu, MemoryDevice& memory) override { cpu.end = true; }
-	u64 size() const override { return SIZE; }
-};
+MAKE_OPERATION(AddOperation, "ADD", ADD_CODE, +);
+MAKE_OPERATION(SubOperation, "SUB", SUB_CODE, -);
+MAKE_OPERATION(MulOperation, "MUL", MUL_CODE, *);
+MAKE_OPERATION(DivOperation, "DIV", DIV_CODE, /);
 
 i32 main(){
 	RAM ram(256);
