@@ -2,7 +2,6 @@
 #define __ASSEMBLER_HPP__
 
 #include "./generic.hpp"
-#include "./Instructions.hpp"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -20,7 +19,21 @@ inline void assemble(std::string path){
 	std::cout << "Assembling " << path << "..." << std::endl;
 	while (std::getline(source, line)){
 		std::cout << line << std::endl;
-
+		std::vector<u64> arg_ends = {};
+		while(true){
+			mut found = line.find(' ');
+			if (found != std::string::npos) break;
+			arg_ends.push_back(std::stoull(line));
+		}
+		std::vector<std::string> args = {};
+		for (u64 i = 0; i < arg_ends.size(); i++){
+			args.push_back(line.substr(0, arg_ends[i]));
+			line = line.substr(arg_ends[i]);
+		}
+		for(auto arg : args){
+			std::cout << "(" << arg << ") ";
+		}
+		std::cout << '\n';
 	}
 }
 

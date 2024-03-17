@@ -87,39 +87,40 @@ MAKE_OPERATION(MulOperation, "MUL", MUL_CODE, *);
 MAKE_OPERATION(DivOperation, "DIV", DIV_CODE, /);
 
 i32 main(){
-	RAM ram(256);
-	CPU cpu = {};
-	Computer computer = { ram, cpu };
-	cpu.add_instruction(MOV_RR_CODE, new MOV_RR());
-	cpu.add_instruction(MOV_RM_CODE, new MOV_RM());
-	cpu.add_instruction(MOV_MR_CODE, new MOV_MR());
-	cpu.add_instruction(MOV_MM_CODE, new MOV_MM());
+	Asm::assemble("code.txt");
+	// RAM ram(256);
+	// CPU cpu = {};
+	// Computer computer = { ram, cpu };
+	// cpu.add_instruction(MOV_RR_CODE, new MOV_RR());
+	// cpu.add_instruction(MOV_RM_CODE, new MOV_RM());
+	// cpu.add_instruction(MOV_MR_CODE, new MOV_MR());
+	// cpu.add_instruction(MOV_MM_CODE, new MOV_MM());
 
-	cpu.add_instruction(ADD_CODE, new AddOperation());
-	cpu.add_instruction(SUB_CODE, new SubOperation());
-	cpu.add_instruction(MUL_CODE, new MulOperation());
-	cpu.add_instruction(DIV_CODE, new DivOperation());
+	// cpu.add_instruction(ADD_CODE, new AddOperation());
+	// cpu.add_instruction(SUB_CODE, new SubOperation());
+	// cpu.add_instruction(MUL_CODE, new MulOperation());
+	// cpu.add_instruction(DIV_CODE, new DivOperation());
 
-	cpu.add_end_instruction(DED_CODE, new DED());
+	// cpu.add_end_instruction(DED_CODE, new DED());
 
-	const u8 code[] = {
-		MOV_MR_CODE, 0x00, 0x40, 0x00, // move to register 0 from memory at address 0x40
-		MOV_RR_CODE, 0x01, 0x00, // move to register 1 from register 0
-		MOV_RM_CODE, 0x01, 0x41, 0x00, // move to memory at address 0x41 from register 1
-		MOV_MM_CODE, 0x00, 0x00, 0x40, 0x00, // move to memory at address 0x00 from memory at address 0x40
-		DED_CODE,
-	};
+	// const u8 code[] = {
+	// 	MOV_MR_CODE, 0x00, 0x40, 0x00, // move to register 0 from memory at address 0x40
+	// 	MOV_RR_CODE, 0x01, 0x00, // move to register 1 from register 0
+	// 	MOV_RM_CODE, 0x01, 0x41, 0x00, // move to memory at address 0x41 from register 1
+	// 	MOV_MM_CODE, 0x00, 0x00, 0x40, 0x00, // move to memory at address 0x00 from memory at address 0x40
+	// 	DED_CODE,
+	// };
 
-	ram.write(0, (u8*)code, sizeof(code));
-	ram.write_byte(0x40, 0x10);
-	std::cout << computer << '\n';
-	std::cout << computer.cpu << '\n';
-	std::cout << computer.memory << '\n';
-	while (!cpu.end){
-		cpu.tick(ram);
-	}
-	std::cout << computer.cpu << '\n';
-	std::cout << computer.memory << '\n';
+	// ram.write(0, (u8*)code, sizeof(code));
+	// ram.write_byte(0x40, 0x10);
+	// std::cout << computer << '\n';
+	// std::cout << computer.cpu << '\n';
+	// std::cout << computer.memory << '\n';
+	// while (!cpu.end){
+	// 	cpu.tick(ram);
+	// }
+	// std::cout << computer.cpu << '\n';
+	// std::cout << computer.memory << '\n';
 
 
 	return 0;
