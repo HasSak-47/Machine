@@ -13,3 +13,7 @@ void CPU::tick(MemoryDevice& memory){
 		end = true;
 	}
 }
+
+void CPU::add_instruction(u8 code, Instruction* instruction){
+	instructions[code] = std::unique_ptr<Instruction>(instruction);
+}
