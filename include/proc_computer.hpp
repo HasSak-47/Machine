@@ -2,10 +2,9 @@
 #define __PROC_COMPUTER_HPP__
 
 #include "./generic.hpp"
+#include "./Instructions.hpp"
 #include <iomanip>
-#include <memory>
 #include <ostream>
-#include <unordered_map>
 
 namespace Proc{
 
@@ -23,7 +22,7 @@ public:
 	void write_byte(u64 location, u8 data){ this->write(location, &data, 1); }
 	u8 read_byte(u64 location){
 		u8 byte = 0;
-		this->read(location, &byte, 0);
+		this->read(location, &byte, 1);
 		return byte;
 	}
 };
@@ -77,8 +76,6 @@ struct MemoryWriter{
 	void write(u8 data){ device.write(ptr++, &data, 1); }
 };
 
-using InstructionSet = std::unordered_map<u8, std::unique_ptr<Instruction>>;
-
 class CPU{
 public:
 	u64 ptr = 0;
@@ -98,7 +95,7 @@ inline std::ostream& operator<<(std::ostream& os, const CPU& cpu){
 	os << "CPU: " << std::endl;
 	os << "Registers: " << std::endl;
 	for (u64 i = 0; i < 16; i++){
-		os << "R" << i << ": " << (u64)cpu.registers[i] << std::endl;
+		os << "R" << i << ": " << (u64)cpu.registers[i] << " ";
 	}
 	os << "PTR: " << cpu.ptr << std::endl;
 	return os;
@@ -113,6 +110,7 @@ class Instruction{
 public:
 	virtual void execute(CPU& cpu, MemoryDevice& device) = 0;
 	virtual u64 size() const = 0;
+	virtual char* name() const = 0;
 	virtual ~Instruction() = default;
 };
 

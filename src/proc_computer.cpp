@@ -8,6 +8,7 @@ void CPU::tick(MemoryDevice& memory){
 	memory.read(ptr, &code, 1);
 	if (instructions.find(code) != instructions.end()){
 		instructions[code]->execute(*this, memory);
+		this->ptr += instructions[code]->size() + 1;
 	}
 	else{
 		end = true;
