@@ -2,3 +2,5 @@ build
 .cache
 make
 VM
+inst
+vgcore*
