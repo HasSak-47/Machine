@@ -61,7 +61,6 @@ public:
 class Instruction{
 public:
 	virtual void act_on(CPU& cpu, MemoryDevice& mem) = 0;
-	virtual void pass_byte(u8 byte) = 0;
 
 	/**
 	 * all instruction signatures are in the next format:

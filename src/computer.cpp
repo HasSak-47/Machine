@@ -34,15 +34,13 @@ u64 RAM::get_size() const{
 
 static void run_instruction(Instruction* instruction, CPU& cpu, MemoryDevice& memory){
 	u64 len = instruction->get_size();
-	for (u64 i = 1; i <= len; i++){
-		u8 byte = memory.read_byte(cpu.ptr + i);
-		instruction->pass_byte(byte);
-	}
+	u8 byte = memory.read_byte(cpu.ptr + 1);
 	instruction->act_on(cpu, memory);
+	cpu.ptr += len + 1;
 }
 
 void CPU::tick(MemoryDevice& memory, Instructions& instructions){
-	std::cout << "in cycle: " << this->count++ << std::endl;
+	// std::cout << "in cycle: " << this->count++ << std::endl;
 	u8 code = memory.read_byte(ptr);
 	if(code == 255){
 		end = true;
@@ -52,9 +50,8 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 	for(auto& instruction : instructions){
 		u8 ins_code = instruction->get_code();
 		if(ins_code == code){
-			std::cout << "running instruction: " << instruction->get_signature() << std::endl;
+			std::cout << "running instruction: " << instruction->get_signature() << " : "<< (int)code << std::endl;
 			run_instruction(instruction.get(), *this, memory);
-			ptr += instruction->get_size() + 1;
 			return;
 		}
 	}
@@ -76,9 +73,10 @@ std::ostream& operator<<(std::ostream& os, const CPU& cpu){
 	os << "end: " << cpu.end << std::endl;
 	os << "ptr: " << cpu.ptr << std::endl;
 	os << "registers: ";
+	os << std::hex;
 	for(auto reg : cpu.registers)
 		os << (u64)reg << " ";
-	os << std::endl;
+	os << std::dec << std::endl;
 	return os;
 }
 
@@ -86,11 +84,13 @@ std::ostream& operator<<(std::ostream& os, const MemoryDevice& mem){
 	os << "RAM: " << std::endl;
 	os << "size: " << mem.get_size() << std::endl;
 	for (u64 i = 0; i < mem.get_size(); ++i){
-		os << std::hex << std::setw(2) << std::setfill(' ') << (u64)mem.read_byte(i) << " ";
+		os << std::hex << std::setw(2) << std::setfill(' ');
+		os << (u64)mem.read_byte(i) << " ";
 
 		if (i % 16 == 15)
 			os << std::endl;
 	}
+	os << std::dec;
 	return os;
 }
 
