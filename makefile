@@ -11,7 +11,5 @@ ins_clean:
 	make -C instructions/ clean
 
 all:
-	make clean
-	make ins_clean
 	make build
 	make ins

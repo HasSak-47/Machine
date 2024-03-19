@@ -39,8 +39,13 @@ public:
 	// counts the number of cycles
 	u64 count = 0;
 	bool end = false;
-	u64 ptr = 0;
+	enum class CMP: u8{
+		BIGGER,
+		EQUAL,
+		LESS,
+	} cmp;
 	u8 registers[16] = {};
+	u64 ptr = 0;
 
 	void tick(MemoryDevice& memory, Instructions& instructions);
 };
@@ -52,6 +57,7 @@ public:
 	Instructions instructions;
 
 	void run();
+	void read_asm(const char* path);
 };
 
 /**

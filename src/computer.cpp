@@ -1,6 +1,11 @@
 #include <Computer.hpp>
+#include <cstdio>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <memory>
+#include <ostream>
+#include <regex>
 
 void MemoryDevice::write_byte(u64 location, u8 data){ this->write(location, &data, 1); }
 u8 MemoryDevice::read_byte(u64 location) const {
@@ -72,6 +77,14 @@ std::ostream& operator<<(std::ostream& os, const CPU& cpu){
 	os << "count: " << cpu.count << std::endl;
 	os << "end: " << cpu.end << std::endl;
 	os << "ptr: " << cpu.ptr << std::endl;
+	auto c = (
+		cpu.cmp == CPU::CMP::EQUAL? 
+		   "EQ":
+		cpu.cmp == CPU::CMP::LESS? 
+			"LS":
+			"BG"
+		);
+	os << "cmp: " << c << std::endl;
 	os << "registers: ";
 	os << std::hex;
 	for(auto reg : cpu.registers)
