@@ -48,7 +48,7 @@ public:
 class Computer{
 public:
 	MemoryDevice& memory;
-	CPU& cpu;
+	CPU cpu;
 	Instructions instructions;
 
 	void run();
@@ -96,8 +96,8 @@ extern "C" {
 #define PUSH_INSTRUCTION_MAKER(name) \
 extern "C" { \
 	void push_instruction(Instructions* instructions){ \
-		auto mov_rr = std::make_unique<name>(); \
-		instructions->push_back(std::move(mov_rr)); \
+		auto _inst= std::make_unique<name>(); \
+		instructions->push_back(std::move(_inst)); \
 	} \
 }
 

@@ -28,7 +28,7 @@ class NAME: public Instruction{
 	}
 
 	const u8 get_size() override{ return 3; }
-	const u8 get_code() override{ return 0x01; }
+	const u8 get_code() override{ return 0x02; }
 	const char* get_signature() override{ return "MOV %d %dr"; }
 };
 

@@ -3,15 +3,17 @@
 
 /**
  * moves the value from one register to another
- ** MOV (dest) (src)
+ ** MOV (dest)r (src)r
  */
 class MOV_RR : public Instruction{
 	u8 dst = 0;
 	u8 src = 0;
 	u8 count = 0;
+
 	void act_on(CPU& cpu, MemoryDevice& mem) override{
 		cpu.registers[dst] = cpu.registers[src];
 	}
+
 	void pass_byte(u8 byte) override{
 		if (count == 0){
 			dst = byte;

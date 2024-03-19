@@ -31,8 +31,8 @@ class NAME: public Instruction{
 	}
 
 	const u8 get_size() override{ return 4; }
-	const u8 get_code() override{ return 0x01; }
-	const char* get_signature() override{ return "MOV %d %dr"; }
+	const u8 get_code() override{ return 0x03; }
+	const char* get_signature() override{ return "MOV %d %d"; }
 };
 
 PUSH_INSTRUCTION_MAKER(NAME)

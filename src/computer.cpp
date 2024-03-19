@@ -1,4 +1,5 @@
 #include <Computer.hpp>
+#include <iomanip>
 #include <iostream>
 
 void MemoryDevice::write_byte(u64 location, u8 data){ this->write(location, &data, 1); }
@@ -15,7 +16,7 @@ void RAM::write(u64 location, u8* data, u64 len){
 
 RAM::RAM(u64 size){
 	this->size = size;
-	this->data = new u8[size];
+	this->data = new u8[size] {255};
 }
 
 RAM::~RAM(){
@@ -51,6 +52,8 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 	for(auto& instruction : instructions){
 		u8 ins_code = instruction->get_code();
 		if(ins_code == code){
+			std::cout << "running instruction: " << instruction->get_signature() << std::endl;
+			run_instruction(instruction.get(), *this, memory);
 			ptr += instruction->get_size() + 1;
 			return;
 		}
@@ -82,12 +85,12 @@ std::ostream& operator<<(std::ostream& os, const CPU& cpu){
 std::ostream& operator<<(std::ostream& os, const MemoryDevice& mem){
 	os << "RAM: " << std::endl;
 	os << "size: " << mem.get_size() << std::endl;
-	// for (u64 i = 0; i < mem.get_size(); ++i){
-	// 	// writes it in hex
-	// 	os << std::hex << (u64)mem.read_byte(i) << " ";
-	// 	if (i % 16 == 15)
-	// 		os << std::endl;
-	// }
+	for (u64 i = 0; i < mem.get_size(); ++i){
+		os << std::hex << std::setw(2) << std::setfill(' ') << (u64)mem.read_byte(i) << " ";
+
+		if (i % 16 == 15)
+			os << std::endl;
+	}
 	return os;
 }
 

@@ -5,16 +5,12 @@
 #include <Computer.hpp>
 #include <dlfcn.h>
 
-const u8 instructions[] = {
+const u8 raw_instructions[] = {
 	0x00, 0x01, 0x00,
 	0xff, // end
 };
 
 int main(){
-	RAM ram(1024);
-	CPU cpu;
-	cpu.registers[0] = 0x17;
-	ram.write(0, (u8*)instructions, sizeof(instructions));
 
 	Instructions instructions;
 	std::vector<void*> handles;
@@ -43,10 +39,16 @@ int main(){
 	}
 
 
-	Computer computer{ram, cpu, std::move(instructions)};
+	auto ram = RAM(256);
+	Computer computer{ram, {}, std::move(instructions)};
+	computer.cpu.registers[0] = 0x17;
+	computer.memory.write(0, (u8*)raw_instructions, sizeof(raw_instructions));
+
 	std::cout << "running computer" << std::endl;
 	std::cout << computer << std::endl;
+
 	computer.run();
+
 	std::cout << computer << std::endl;
 	
 	std::cout << "clearing instructions" << std::endl;
