@@ -2,7 +2,7 @@
 #include <iostream>
 
 void MemoryDevice::write_byte(u64 location, u8 data){ this->write(location, &data, 1); }
-u8 MemoryDevice::read_byte(u64 location){
+u8 MemoryDevice::read_byte(u64 location) const {
 	u8 byte = 0;
 	this->read(location, &byte, 1);
 	return byte;
@@ -31,6 +31,15 @@ u64 RAM::get_size() const{
 	return size;
 }
 
+static void run_instruction(Instruction* instruction, CPU& cpu, MemoryDevice& memory){
+	u64 len = instruction->get_size();
+	for (u64 i = 1; i <= len; i++){
+		u8 byte = memory.read_byte(cpu.ptr + i);
+		instruction->pass_byte(byte);
+	}
+	instruction->act_on(cpu, memory);
+}
+
 void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 	std::cout << "in cycle: " << this->count++ << std::endl;
 	u8 code = memory.read_byte(ptr);
@@ -42,7 +51,6 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 	for(auto& instruction : instructions){
 		u8 ins_code = instruction->get_code();
 		if(ins_code == code){
-			instruction->execute(*this, memory);
 			ptr += instruction->get_size() + 1;
 			return;
 		}
@@ -56,4 +64,36 @@ void Computer::run(){
 	while(!cpu.end){
 		cpu.tick(memory, instructions);
 	}
+}
+
+// ostream stuff
+std::ostream& operator<<(std::ostream& os, const CPU& cpu){
+	os << "CPU: " << std::endl;
+	os << "count: " << cpu.count << std::endl;
+	os << "end: " << cpu.end << std::endl;
+	os << "ptr: " << cpu.ptr << std::endl;
+	os << "registers: ";
+	for(auto reg : cpu.registers)
+		os << (u64)reg << " ";
+	os << std::endl;
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const MemoryDevice& mem){
+	os << "RAM: " << std::endl;
+	os << "size: " << mem.get_size() << std::endl;
+	// for (u64 i = 0; i < mem.get_size(); ++i){
+	// 	// writes it in hex
+	// 	os << std::hex << (u64)mem.read_byte(i) << " ";
+	// 	if (i % 16 == 15)
+	// 		os << std::endl;
+	// }
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const Computer& computer){
+	os << "Computer: " << std::endl;
+	os << computer.memory << std::endl;
+	os << computer.cpu << std::endl;
+	return os;
 }

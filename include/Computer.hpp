@@ -17,13 +17,13 @@ public:
 	virtual u64 get_size() const = 0;
 
 	void write_byte(u64 location, u8 data);
-	u8 read_byte(u64 location);
+	u8 read_byte(u64 location) const;
 };
 
 class RAM : public MemoryDevice{
 private:
-	u8* data;
-	u64 size;
+	u8* data = nullptr;
+	u64 size = 0;
 public:
 	RAM(u64 size);
 	~RAM();
@@ -40,7 +40,7 @@ public:
 	u64 count = 0;
 	bool end = false;
 	u64 ptr = 0;
-	u8 registers[16];
+	u8 registers[16] = {};
 
 	void tick(MemoryDevice& memory, Instructions& instructions);
 };
@@ -63,19 +63,11 @@ public:
 	virtual void act_on(CPU& cpu, MemoryDevice& mem) = 0;
 	virtual void pass_byte(u8 byte) = 0;
 
-	// give the instruction the bytes it needs to execute
-	void execute(CPU& cpu, MemoryDevice& mem){
-		u8 size = this->get_size();
-		for(u8 i = 0; i < size; i++){
-			this->pass_byte(mem.read_byte(cpu.ptr + i));
-		}
-		act_on(cpu, mem);
-	}
-
 	/**
 	 * all instruction signatures are in the next format:
 	 * <instruction_name> <arg1> <arg2> ... <argN>
-	 * ^(\w+) (%d[rm]?)*$
+	 ** regex: ^(\w+) (%d[rm]?)*$
+	 **         ^name  ^arg format
 	 * @return the signature of the instruction
 	 */
 	virtual const char* get_signature() = 0;
@@ -85,8 +77,28 @@ public:
 	virtual ~Instruction() = default;
 };
 
+
+// guard for adding ostream outs only to the main file
+#ifndef __INSTRUCTION_LOADER_HPP__
+#define __INSTRUCTION_LOADER_HPP__
+
+std::ostream& operator<<(std::ostream& os, const CPU& cpu);
+std::ostream& operator<<(std::ostream& os, const MemoryDevice& mem);
+std::ostream& operator<<(std::ostream& os, const Computer& computer);
+
+#endif
+
+
 extern "C" {
-	typedef void (*AddInstructionFunc)(Instructions* instructions);
+	typedef void (*PushInstructionFunc)(Instructions* instructions);
+}
+
+#define PUSH_INSTRUCTION_MAKER(name) \
+extern "C" { \
+	void push_instruction(Instructions* instructions){ \
+		auto mov_rr = std::make_unique<name>(); \
+		instructions->push_back(std::move(mov_rr)); \
+	} \
 }
 
 #endif

@@ -29,7 +29,7 @@ int main(){
 		}
 		std::cout << "loading: " << path << std::endl;
 
-		auto add_instruction = (void(*)(Instructions*))dlsym(handle, "add_instruction");
+		auto add_instruction = (PushInstructionFunc)dlsym(handle, "push_instruction");
 		if (!add_instruction){
 			std::cerr << "dlsym failed: " << dlerror() << std::endl;
 			dlclose(handle);
@@ -44,7 +44,10 @@ int main(){
 
 
 	Computer computer{ram, cpu, std::move(instructions)};
+	std::cout << "running computer" << std::endl;
+	std::cout << computer << std::endl;
 	computer.run();
+	std::cout << computer << std::endl;
 	
 	std::cout << "clearing instructions" << std::endl;
 	computer.instructions.clear();

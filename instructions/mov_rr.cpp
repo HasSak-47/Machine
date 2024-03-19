@@ -1,6 +1,10 @@
+#define __INSTRUCTIONS_LOADER_HPP__
 #include <Computer.hpp>
-#include <iostream>
 
+/**
+ * moves the value from one register to another
+ ** MOV (dest) (src)
+ */
 class MOV_RR : public Instruction{
 	u8 dst = 0;
 	u8 src = 0;
@@ -23,10 +27,4 @@ class MOV_RR : public Instruction{
 	const char* get_signature() override{ return "MOV %dr %dr"; }
 };
 
-extern "C" {
-	void add_instruction(Instructions* instructions){
-		auto mov_rr = std::make_unique<MOV_RR>();
-		instructions->push_back(std::move(mov_rr));
-		std::cout << "added mov rr" << std::endl;
-	}
-}
+PUSH_INSTRUCTION_MAKER(MOV_RR)
