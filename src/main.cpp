@@ -17,7 +17,7 @@ int main(){
 			std::cerr << "dlopen failed: " << dlerror() << std::endl;
 			continue;
 		}
-		std::cout << "loading: " << path << std::endl;
+		// std::cout << "loading: " << path << std::endl;
 
 		auto add_instruction = (PushInstructionFunc)dlsym(handle, "push_instruction");
 		if (!add_instruction){
@@ -26,13 +26,13 @@ int main(){
 			continue;
 		}
 
-		std::cout << "adding instruction from handle: " << handle << std::endl;
+		// std::cout << "adding instruction from handle: " << handle << std::endl;
 		add_instruction(&instructions);
-		std::cout << "instruction added!" << std::endl;
+		// std::cout << "instruction added!" << std::endl;
 		handles.push_back(handle);
 	}
 
-	std::cout << "instructions loaded: " << instructions.size() << std::endl;
+	// std::cout << "instructions loaded: " << instructions.size() << std::endl;
 	// for (auto& instruction : instructions){
 	// 	std::cout << "instruction: " << instruction->get_signature() ;
 	// 	std::cout << " code: " << std::hex << (int)instruction->get_code() << std::endl;
@@ -48,16 +48,14 @@ int main(){
 
 	std::cout << computer << std::endl;
 	std::cout << "running computer" << std::endl;
-
-	computer.run();
-
-	std::cout << computer << std::endl;
+	// computer.run();
+	// std::cout << computer << std::endl;
 	
 	std::cout << "clearing instructions" << std::endl;
 	computer.instructions.clear();
 	std::cout << "closing handles" << std::endl;
 	for (auto handle : handles){
-		std::cout << "closing handle: " << handle << std::endl;
+		// std::cout << "closing handle: " << handle << std::endl;
 		dlclose(handle);
 	}
 

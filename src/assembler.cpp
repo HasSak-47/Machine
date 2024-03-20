@@ -69,26 +69,30 @@ std::vector<u8> assemble(Instructions& instructions, const char* filename){
 
 	// preprocess
 	// find all labels and get their pos
-	// size_t len = 0;
-	// for(auto& line : lines){
-	// 	if(line.find(':') != std::string::npos){
-	// 		std::string label = line.substr(0, line.find(':'));
-	// 		labels[label] = len;
-	// 		continue;
-	// 	}
-	// 	Instruction* instr = match_instruction(line, instructions);
-	// 	if(!instr){
-	// 		std::cerr << "instruction not found: " << line << std::endl;
-	// 		continue;
-	// 	}
-	// 	len += instr->get_size() + 1;
-	// }
+	size_t len = 0;
+	for(auto& line : lines){
+		if(line.find(':') != std::string::npos){
+			std::string label = line.substr(0, line.find(':'));
+			labels[label] = len;
+			continue;
+		}
+		Instruction* instr = match_instruction(line, instructions);
+		if(!instr){
+			std::cerr << "instruction not found: " << line << std::endl;
+			continue;
+		}
+		len += instr->get_size() + 1;
+	}
+	std::cout << "found labels: " << labels.size() << std::endl;
+	for(auto& label: labels)
+		std::cout << "label: " << label.first << " pos: " << label.second << std::endl;
 
 	// assembly
 	for(auto& line : lines){
 		// skip all labels
 		if(line.find(':') != std::string::npos)
 			continue;
+
 		// replace all labels with their pos
 		for(auto& label: labels){
 			size_t pos = 0;

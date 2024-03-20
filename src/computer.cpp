@@ -1,11 +1,10 @@
 #include <Computer.hpp>
 #include <cstdio>
-#include <fstream>
 #include <iomanip>
+#include <ios>
 #include <iostream>
 #include <memory>
 #include <ostream>
-#include <regex>
 
 void MemoryDevice::write_byte(u64 location, u8 data){ this->write(location, &data, 1); }
 u8 MemoryDevice::read_byte(u64 location) const {
@@ -55,7 +54,15 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 	for(auto& instruction : instructions){
 		u8 ins_code = instruction->get_code();
 		if(ins_code == code){
-			std::cout << "running instruction: " << instruction->get_signature() << " : "<< (int)code << std::endl;
+			std::string sig = instruction->get_signature();
+			u64 t = sig.find(" ");
+			if (t != std::string::npos)
+				sig.resize(t);
+			std::cout << "running instruction: " << sig << " ";
+			for(u32 i = 1; i <= instruction->get_size(); ++i)
+				std::cout << std::hex << std::setw(2) << std::setfill(' ') << (u64)memory.read_byte(ptr + i) << " ";
+			std::cout<< std::dec << std::endl;
+
 			run_instruction(instruction.get(), *this, memory);
 			return;
 		}
@@ -68,6 +75,9 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 void Computer::run(){
 	while(!cpu.end){
 		cpu.tick(memory, instructions);
+		std::cout << *this << std::endl;
+		// wait until any input
+		std::getchar();
 	}
 }
 

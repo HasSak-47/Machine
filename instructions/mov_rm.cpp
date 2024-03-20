@@ -1,22 +1,25 @@
-#define __INSTRUCTIONS_LOADER_HPP__
+#define INSTRUCTION_MAKER
 #include <Computer.hpp>
 
 #define NAME MOV_RM
+
+static const InsS SIGNATURE = {
+	.name = "MOV",
+	.params = 2,
+	.args = {
+		(InsT)(InsT::Reg),
+		(InsT)(InsT::Mem | InsT::Word),
+	},
+};
 
 /**
  * moves the value from a memory address to a register
  ** MOV (dest) (src)
  */
-class NAME: public Instruction{
-	void act_on(CPU& cpu, MemoryDevice& mem) override{
-		u8 dst = mem.read_byte(cpu.ptr + 1);
-		u16 src = mem.read_byte(cpu.ptr + 2) | (mem.read_byte(cpu.ptr + 3) << 8);
-		cpu.registers[dst] = mem.read_byte(src);
-	}
-
-	const u8 get_size() override{ return 3; }
-	const u8 get_code() override{ return 0x01; }
-	const char* get_signature() override{ return "MOV %dr %d"; }
-};
+INST_TEMPLATE(NAME, {
+	u8 dst = mem.read_byte(cpu.ptr + 1);
+	u16 src = mem.read_byte(cpu.ptr + 2) | (mem.read_byte(cpu.ptr + 3) << 8);
+	cpu.registers[dst] = mem.read_byte(src);
+}, 3, 0x01)
 
 PUSH_INSTRUCTION_MAKER(NAME)

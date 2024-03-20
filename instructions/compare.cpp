@@ -1,28 +1,29 @@
-#define __INSTRUCTIONS_LOADER_HPP__
+#define INSTRUCTION_MAKER
 #include <Computer.hpp>
 
 #define NAME CMP
 
+static const InsS SIGNATURE = {
+	.name = "CMP",
+	.params = 0,
+	.args = {},
+};
+
 /**
  * Compares reg0 and reg1
  */
-class NAME: public Instruction{
-	void act_on(CPU& cpu, MemoryDevice& mem) override{
-		if(cpu.registers[0] == cpu.registers[1]){
-			cpu.cmp = CPU::CMP::EQUAL;
-		}
-		else
-		if(cpu.registers[0] < cpu.registers[1]){
-			cpu.cmp = CPU::CMP::LESS;
-		}
-		else {
-			cpu.cmp = CPU::CMP::BIGGER;
-		}
+INST_TEMPLATE(NAME, {
+	if(cpu.registers[0] == cpu.registers[1]){
+		cpu.cmp = CPU::CMP::EQUAL;
 	}
-
-	const u8 get_size() override{ return 0; }
-	const u8 get_code() override{ return 0x20; }
-	const char* get_signature() override{ return "CMP"; }
-};
+	else
+	if(cpu.registers[0] < cpu.registers[1]){
+		cpu.cmp = CPU::CMP::LESS;
+	}
+	else
+	if(cpu.registers[0] < cpu.registers[1]) {
+		cpu.cmp = CPU::CMP::BIGGER;
+	}
+}, 1, 0x20)
 
 PUSH_INSTRUCTION_MAKER(NAME)

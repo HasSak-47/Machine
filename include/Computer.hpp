@@ -64,6 +64,27 @@ public:
  * this class holds the Instruction signature in the form of virtual const functions
  * and also will execute the instruction using non virtual functions
  */
+
+enum InstructionParamType : u8{
+	// typeof 0x0x
+	Mem = 0x1,
+	Reg = 0x2,
+	Val = 0x4,
+	Lab = 0x8,
+
+	// lens 0x0x
+	Byte = 0x01,
+	Word = 0x12,
+
+	ERROR = 0x00,
+};
+
+struct InstructionSignature{
+	const char* name;
+	const size_t params;
+	const InstructionParamType args[];
+};
+
 class Instruction{
 public:
 	virtual void act_on(CPU& cpu, MemoryDevice& mem) = 0;
@@ -75,7 +96,7 @@ public:
 	 **         ^name  ^arg format
 	 * @return the signature of the instruction
 	 */
-	virtual const char* get_signature() = 0;
+	virtual const InstructionSignature get_signature() = 0;
 	virtual const u8 get_code() = 0;
 	virtual const u8 get_size() = 0;
 
@@ -83,13 +104,27 @@ public:
 };
 
 
-// guard for adding ostream outs only to the main file
-#ifndef __INSTRUCTION_LOADER_HPP__
-#define __INSTRUCTION_LOADER_HPP__
+// for adding ostream outs only to the VM executable
+#ifdef INSTRUCTION_MAKER 
+using InsT = InstructionParamType;
+using InsS = InstructionSignature;
 
+#define INST_TEMPLATE(NAME, ACTOR, SIZE, CODE) \
+class NAME : public Instruction\
+{\
+	void act_on(CPU& cpu, MemoryDevice& mem) override{ ACTOR }\
+	const u8 get_size() override{ return SIZE; }\
+	const u8 get_code() override{ return CODE; }\
+	const InstructionSignature get_signature() override{ return SIGNATURE; }\
+};
+
+// for adding a basic instruction template only to the instruction shared objects
+#else // INSTRUCTION_MAKER
+	  //
 std::ostream& operator<<(std::ostream& os, const CPU& cpu);
 std::ostream& operator<<(std::ostream& os, const MemoryDevice& mem);
 std::ostream& operator<<(std::ostream& os, const Computer& computer);
+
 
 #endif
 
