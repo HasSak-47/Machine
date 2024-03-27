@@ -54,7 +54,7 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 	for(auto& instruction : instructions){
 		u8 ins_code = instruction->get_code();
 		if(ins_code == code){
-			std::string sig = instruction->get_signature();
+			std::string sig = instruction->get_signature().name;
 			u64 t = sig.find(" ");
 			if (t != std::string::npos)
 				sig.resize(t);

@@ -57,20 +57,18 @@ public:
 	Instructions instructions;
 
 	void run();
-	void read_asm(const char* path);
 };
 
 /**
  * this class holds the Instruction signature in the form of virtual const functions
  * and also will execute the instruction using non virtual functions
  */
-
 enum InstructionParamType : u8{
 	// typeof 0x0x
 	Mem = 0x1,
 	Reg = 0x2,
 	Val = 0x4,
-	Lab = 0x8,
+	Adr = 0x8,
 
 	// lens 0x0x
 	Byte = 0x01,
@@ -103,11 +101,23 @@ public:
 	virtual ~Instruction() = default;
 };
 
+std::vector<u8> assemble(const std::string& code, Instructions& instructions);
+
 
 // for adding ostream outs only to the VM executable
 #ifdef INSTRUCTION_MAKER 
 using InsT = InstructionParamType;
 using InsS = InstructionSignature;
+
+#define INST_TEMPLATE_FULL(NAME, ACTOR, SIZE, CODE, SIGN_NAME, SIGN_COUNT, SIGN_ARR) \
+const InsS NAME##_SIGNATURE = { SIGN_NAME, SIGN_COUNT, SIGN_ARR };\
+class NAME : public Instruction\
+{\
+	void act_on(CPU& cpu, MemoryDevice& mem) override{ ACTOR }\
+	const u8 get_size() override{ return SIZE; }\
+	const u8 get_code() override{ return CODE; }\
+	const InstructionSignature get_signature() override{ return NAME##_SIGNATURE; }\
+};
 
 #define INST_TEMPLATE(NAME, ACTOR, SIZE, CODE) \
 class NAME : public Instruction\

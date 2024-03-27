@@ -1,119 +1,214 @@
 #include "generic.hpp"
 #include <Computer.hpp>
+#include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <regex>
+#include <ostream>
 #include <unordered_map>
+#include <vector>
 
-static std::vector<u8> get_args(const std::string& line){
-	std::vector<u8> args;
-	auto re_sig = std::regex("(0x)?[0-9a-f]+[rv]?");
-	auto words_begin = std::sregex_iterator(line.begin(), line.end(), re_sig);
-	for (std::sregex_iterator i = words_begin; i != std::sregex_iterator(); ++i){
-		std::smatch match = *i;
-		std::string match_str = match.str();
-		if(match_str.find('r') != std::string::npos || match_str.find('v') != std::string::npos){
-			match_str.pop_back();
-			u8 arg = std::stoi(match_str, 0, 16);
-			args.push_back(arg);
-		}
-		else{
-			u16 arg = std::stoi(match_str, 0, 16);
-			args.push_back(arg & 0xff);
-			args.push_back(arg >> 8);
-		}
-		// std::cout << (i32)arg << std::endl;
+static std::string clean_string(const std::string str){
+	std::string buffer = str;
+
+	// replace tabs with spaces for easier parsing
+	for (auto& c : buffer)
+		if(c == '\t')
+			c = ' ';
+
+	// cleanes leading whitespace and comments
+	std::string cleaned;
+	bool leading = true;
+	for(auto c : buffer){
+		if(leading && c == ' ')
+			continue;
+		if(c == ';')
+			break;
+		leading = false;
+		cleaned.push_back(c);
 	}
 
-	return args;
+	// remove trailing whitespace
+	while(cleaned.back() == ' ')
+		cleaned.pop_back();
+
+
+	// remove double spaces
+	u64 pos = 0;
+	while((pos = cleaned.find("  ", pos)) != std::string::npos)
+		cleaned.replace(pos, 2, " ");
+
+	return cleaned;
 }
 
-static void to_regex(std::string& line){
-	size_t pos = 0;
-	while((pos = line.find("%d")) != std::string::npos)
-		line.replace(pos, 2, "(0x)?[0-9a-f]+");
-}
+struct Token{
+	enum Type{
+		REGISTER,
+		NUMBER,
+		LABEL,
+		INSTRUCTION,
+		STRING,
+		UNKNOWN
+	} type;
+	std::string value;
 
-static Instruction* match_instruction(std::string& line, Instructions& instructions){
-	for (auto& instruction : instructions){
-		std::string sig = instruction->get_signature();
-		to_regex(sig);
-		auto re_sig = std::regex(sig);
-		// check if the line matches the signature
-		if(std::regex_match(line, re_sig)) 
-			return instruction.get();
+	static Token make_string(const std::string& str, bool is_string){
+		Token token;
+		token.type = is_string ? STRING : UNKNOWN;
+		token.value = str;
+
+		return token;
 	}
 
-	return nullptr;
+	bool set_label_if(){
+		if(value.empty() || type != UNKNOWN)
+			return false;
+		u64 pos = value.find(':');
+		if(pos == std::string::npos)
+			return false;
+		this->type = LABEL;
+		this->value = value.substr(0, pos);
+
+		return true;
+	}
+
+	bool make_label_if(std::vector<Token*>& tokens){
+		if(value.empty() || type != UNKNOWN)
+			return false;
+		for(auto& token : tokens){
+			if(token->value == value && token->type == LABEL){
+				this->type = LABEL;
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
+std::ostream& operator<<(std::ostream& os, const Token& token){
+	// set color based on type
+	switch(token.type){
+		case Token::REGISTER:
+			os << "\033[1;32m";
+			break;
+		case Token::NUMBER:
+			os << "\033[1;34m";
+			break;
+		case Token::LABEL:
+			os << "\033[1;35m";
+			break;
+		case Token::INSTRUCTION:
+			os << "\033[1;36m";
+			break;
+		case Token::STRING:
+			os << "\033[1;33m";
+			break;
+		case Token::UNKNOWN:
+			os << "\033[0;37m";
+			break;
+		default:
+			os << "\033[0;37m";
+			break;
+	}
+	std::cout << (token.type == Token::STRING ? "\"" : "");
+	os << token.value;
+	std::cout << (token.type == Token::STRING ? "\"" : "");
+	os << "\033[0m";
+	return os;
 }
 
-static std::vector<u8> build_instruction(Instruction* instruction, const std::string& line){
-	std::vector<u8> result;
-	std::vector<u8> args = get_args(line);
-	result.push_back(instruction->get_code());
-	for(auto arg : args)
-		result.push_back(arg);
+std::vector<Token> tokenize(const std::string& str){
+	std::vector<Token> tokens;
 
-	return result;
+	// first it splits string into quotes and non-quotes
+	bool inside_quotes = false;
+	u64 start = 0;
+	u64 end = 0;
+	for(size_t i = 1; i < str.size(); i++){
+		const char& c = str[i];
+		if(c == '"'){
+			end = i;
+			tokens.push_back(Token::make_string(str.substr(start, end - start), inside_quotes));
+			inside_quotes = !inside_quotes;
+			start = i + 1;
+		}
+	}
+	end = str.size();
+	std::string sub_end = str.substr(start, end - start);
+	if (!sub_end.empty())
+		tokens.push_back(Token::make_string(str.substr(start, end - start), inside_quotes));
+
+	std::vector<Token> final;
+	// then it splits the non-quotes into words
+	for(size_t i = 0; i < tokens.size(); i++){
+		if(tokens[i].type != Token::UNKNOWN){
+			final.push_back(tokens[i]);
+			continue;
+		}
+
+		const std::string& str = tokens[i].value;
+		std::string buffer = "";
+		u64 start = 0;
+		u64 end = 0;
+		for(auto c : str){
+			if(c == ' '){
+				if(!buffer.empty()){
+					final.push_back(Token{Token::UNKNOWN, buffer});
+					buffer.clear();
+				}
+				continue;
+			}
+			buffer.push_back(c);
+		}
+		if(!buffer.empty())
+			final.push_back(Token{Token::UNKNOWN, buffer});
+	}
+
+	for(auto& token : final)
+		token.set_label_if();
+
+	return final;
 }
 
-std::vector<u8> assemble(Instructions& instructions, const char* filename){
-	std::vector<u8> bytes;
-	std::ifstream file(filename);
-	std::vector<std::string> lines = {};
+std::vector<u8> assemble(const std::string& path, Instructions &instructions){
+	std::vector<u8> binary;
+
+	std::ifstream file(path);
+
+	// Read file, and clean lines
+	std::vector<std::string> lines;
 	std::string line;
-	while (std::getline(file, line))
-		lines.push_back(line);
-
-	std::unordered_map<std::string, u16> labels = {};
-
-	// preprocess
-	// find all labels and get their pos
-	size_t len = 0;
-	for(auto& line : lines){
-		if(line.find(':') != std::string::npos){
-			std::string label = line.substr(0, line.find(':'));
-			labels[label] = len;
+	while(std::getline(file, line)){
+		if (line.empty())
 			continue;
-		}
-		Instruction* instr = match_instruction(line, instructions);
-		if(!instr){
-			std::cerr << "instruction not found: " << line << std::endl;
-			continue;
-		}
-		len += instr->get_size() + 1;
+		std::string cleaned = clean_string(line);
+		lines.push_back(cleaned);
 	}
-	std::cout << "found labels: " << labels.size() << std::endl;
-	for(auto& label: labels)
-		std::cout << "label: " << label.first << " pos: " << label.second << std::endl;
 
-	// assembly
-	for(auto& line : lines){
-		// skip all labels
-		if(line.find(':') != std::string::npos)
-			continue;
+	// Tokenize lines
+	std::vector<std::vector<Token>> tokens;
+	for(auto& line : lines)
+		tokens.push_back(tokenize(line));
 
-		// replace all labels with their pos
-		for(auto& label: labels){
-			size_t pos = 0;
-			while((pos = line.find(label.first)) != std::string::npos)
-				line.replace(pos, label.first.length(), std::to_string(label.second));
+	// Find labels
+	std::vector<Token*> labels= {};
+	for(auto& token_line : tokens){
+		for(auto& token : token_line){
+			if(token.type == Token::LABEL)
+				labels.push_back(&token);
 		}
-		std::cout << "line: " << line << std::endl;
-		Instruction* instr = match_instruction(line, instructions);
-		if(!instr){
-			std::cerr << "instruction not found: " << line << std::endl;
-			continue;
-		}
-		std::vector<u8> instr_bytes = build_instruction(instr, line);
-		bytes.insert(bytes.end(), instr_bytes.begin(), instr_bytes.end());
 	}
-	bytes.push_back(0xff);
 
-	return bytes;
-}
+	
 
-void Computer::read_asm(const char* path){
-	auto r = assemble(this->instructions, path);
-	this->memory.write(0, r.data(), r.size());
+	for(auto& token_line : tokens){
+		for(auto& token : token_line)
+			std::cout << token << " ";
+		std::cout << std::endl;
+	}
+
+
+
+
+	return binary;
 }
