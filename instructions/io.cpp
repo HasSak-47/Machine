@@ -41,6 +41,6 @@ INST_TEMPLATE(NAME, {
 			mem.write_byte(addr + i, i < str.size() ? str[i] : 0);
 	}
 
-}, 1, 0x80)
+}, 0x80)
 
 PUSH_INSTRUCTION_MAKER(NAME)

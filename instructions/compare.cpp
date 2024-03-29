@@ -24,6 +24,6 @@ INST_TEMPLATE(NAME, {
 	if(cpu.registers[0] < cpu.registers[1]) {
 		cpu.cmp = CPU::CMP::BIGGER;
 	}
-}, 1, 0x20)
+}, 0x20)
 
 PUSH_INSTRUCTION_MAKER(NAME)

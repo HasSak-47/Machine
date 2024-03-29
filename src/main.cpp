@@ -36,27 +36,16 @@ int main(){
 	}
 #endif
 
-	// std::cout << "instructions loaded: " << instructions.size() << std::endl;
-	// for (auto& instruction : instructions){
-	// 	std::cout << "instruction: " << instruction->get_signature() ;
-	// 	std::cout << " code: " << std::hex << (int)instruction->get_code() << std::endl;
-	// 	std::cout << std::dec;
-	// }
-
 	auto ram = RAM(256);
-	u8 raw_instructions[] = {
-		0x80, 0x01, 0x00, 0x01, 0x10,
-	};
-
-	std::cout << "writing instructions to virtual memory" << std::endl;
-	ram.write(0, (u8*)raw_instructions, sizeof(raw_instructions));
+	// std::cout << "writing instructions to virtual memory" << std::endl;
+	// ram.write(0, (u8*)raw_instructions, sizeof(raw_instructions));
 	Computer computer{ram, {}, std::move(instructions)};
-	// std::cout << "reading asm" << std::endl;
-	// assemble("code.txt", computer.instructions);
+	std::cout << "reading asm" << std::endl;
+	assemble("code.asm", computer.instructions);
 
-	std::cout << "running computer" << std::endl;
-	computer.run();
-	std::cout << computer << std::endl;
+	// std::cout << "running computer" << std::endl;
+	// computer.run();
+	// std::cout << computer << std::endl;
 	
 	// std::cout << "clearing instructions" << std::endl;
 	computer.instructions.clear();

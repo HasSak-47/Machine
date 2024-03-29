@@ -1,10 +1,18 @@
-files := $(wildcard *.cpp)
+SRCS := $(wildcard *.cpp)
 
-build_mm:
-	g++ -I ../include mov_mm.cpp -fPIC -shared -o ../inst/mov_mm.cpp.so
+CXX := g++
+CXXFLAGS := -I ../include -fPIC -shared
+INST_DIR := ../inst
 
-build:
-	$(foreach file, $(files), g++ -I ../include $(file) -fPIC -shared -o ../inst/$(file).so &&) echo "build cmds!"
+OBJS := $(patsubst %.cpp, $(INST_DIR)/%.so, $(SRCS))
+
+all: $(OBJS)
+
+$(INST_DIR)/%.so: %.cpp | $(INST_DIR)
+	@echo "Building $@..."
+	@$(CXX) $(CXXFLAGS)  $< -o ../inst/$@
 
 clean:
-	rm ../inst/*.so
+	rm $(OBJS)
+
+.PHONY: all clean

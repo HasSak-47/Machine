@@ -40,7 +40,7 @@ static void run_instruction(Instruction* instruction, CPU& cpu, MemoryDevice& me
 	u64 len = instruction->get_size();
 	u8 byte = memory.read_byte(cpu.ptr + 1);
 	instruction->act_on(cpu, memory);
-	cpu.ptr += len + 1;
+	cpu.ptr += len;
 }
 
 void CPU::tick(MemoryDevice& memory, Instructions& instructions){
@@ -54,14 +54,14 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 	for(auto& instruction : instructions){
 		u8 ins_code = instruction->get_code();
 		if(ins_code == code){
-			std::string sig = instruction->get_signature().name;
-			u64 t = sig.find(" ");
-			if (t != std::string::npos)
-				sig.resize(t);
-			std::cout << "running instruction: " << sig << " ";
-			for(u32 i = 1; i <= instruction->get_size(); ++i)
-				std::cout << std::hex << std::setw(2) << std::setfill(' ') << (u64)memory.read_byte(ptr + i) << " ";
-			std::cout<< std::dec << std::endl;
+			// std::string sig = instruction->get_signature().name;
+			// u64 t = sig.find(" ");
+			// if (t != std::string::npos)
+			// 	sig.resize(t);
+			// std::cout << "running instruction: " << sig << " ";
+			// for(u32 i = 1; i <= instruction->get_size(); ++i)
+			// 	std::cout << std::hex << std::setw(2) << std::setfill(' ') << (u64)memory.read_byte(ptr + i) << " ";
+			// std::cout<< std::dec << std::endl;
 
 			run_instruction(instruction.get(), *this, memory);
 			return;
@@ -121,5 +121,55 @@ std::ostream& operator<<(std::ostream& os, const Computer& computer){
 	os << "Computer: " << std::endl;
 	os << computer.memory << std::endl;
 	os << computer.cpu << std::endl;
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, Instruction& instruction){
+	const auto& sig = instruction.get_signature();
+	u64 count = sig.params;
+	os << sig.name << " ";
+	for(u64 i = 0; i < count; ++i){
+		auto arg = sig.args[i];
+		os << arg << " ";
+	}
+
+	return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const InstructionParamType& sig){
+	using IPT = InstructionParamType;
+
+	switch(sig & 0x0f){
+		case IPT::Mem:
+			os << "Mem";
+			break;
+
+		case IPT::Reg:
+			os << "Reg";
+			break;
+
+		case IPT::Val:
+			os << "Val";
+			break;
+
+		case IPT::Adr:
+			os << "Adr";
+			break;
+
+		default:
+			os << std::hex << "TE(" << (u64)(sig & 0x0f)<< ")" << std::dec;
+	}
+	switch(sig & 0xf0){
+		case IPT::Byte:
+			os << " Byte";
+			break;
+
+		case IPT::Word:
+			os << " Word";
+			break;
+		default:
+			os << std::hex << "LE(" << (u64)(sig & 0xf0)<< ")" << std::dec;
+	}
+
 	return os;
 }

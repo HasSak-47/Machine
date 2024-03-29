@@ -12,9 +12,8 @@ class NAME : public Instruction{ \
 		cpu.registers[2] = cpu.registers[0] OPER cpu.registers[1]; \
 	} \
 \
-	const u8 get_size() override{ return 0; } \
 	const u8 get_code() override{ return CODE; } \
-	const InsS get_signature() override{ return NAME##SIG; } \
+	const InsS& get_signature() override{ return NAME##SIG; } \
 }; \
 \
 

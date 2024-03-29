@@ -7,7 +7,7 @@
 #include <vector>
 
 class Instruction;
-using Instructions = std::vector<std::unique_ptr<Instruction>>;
+using Instructions = std::vector<std::shared_ptr<Instruction>>;
 
 class MemoryDevice{
 public:
@@ -18,6 +18,11 @@ public:
 
 	void write_byte(u64 location, u8 data);
 	u8 read_byte(u64 location) const;
+	u16 read_word(u64 location) const {
+		u16 data = 0;
+		read(location, (u8*)&data, 2);
+		return data;
+	}
 };
 
 class RAM : public MemoryDevice{
@@ -64,23 +69,27 @@ public:
  * and also will execute the instruction using non virtual functions
  */
 enum InstructionParamType : u8{
-	// typeof 0x0x
-	Mem = 0x1,
-	Reg = 0x2,
-	Val = 0x4,
-	Adr = 0x8,
+	// typeof 0xn0
 
-	// lens 0x0x
-	Byte = 0x01,
-	Word = 0x12,
+	Mem = 0x01,
+	Reg = 0x02,
+	Val = 0x04,
+	Adr = 0x08,
 
-	ERROR = 0x00,
+	// lens 0x0n
+
+	Byte = 0x10,
+	Word = 0x20,
+
+	ERROR = 0xff,
 };
 
 struct InstructionSignature{
 	const char* name;
 	const size_t params;
 	const InstructionParamType args[];
+
+	InstructionSignature(const InstructionSignature& sig) = delete;
 };
 
 class Instruction{
@@ -94,12 +103,25 @@ public:
 	 **         ^name  ^arg format
 	 * @return the signature of the instruction
 	 */
-	virtual const InstructionSignature get_signature() = 0;
+	virtual const InstructionSignature& get_signature() = 0;
 	virtual const u8 get_code() = 0;
-	virtual const u8 get_size() = 0;
+
+	/**
+	 * @return the size of the instruction in bytes
+	 */
+	const u8 get_size() {
+		let& signature = get_signature();
+		u64 size = signature.params + 1;
+		for(u64 i = 0; i < signature.params; i++)
+			size += signature.args[i] & 0xf0 >> 4;
+		return size;
+	}
 
 	virtual ~Instruction() = default;
 };
+
+std::ostream& operator<<(std::ostream& os, Instruction& instruction);
+std::ostream& operator<<(std::ostream& os, const InstructionParamType& sig);
 
 std::vector<u8> assemble(const std::string& code, Instructions& instructions);
 
@@ -109,32 +131,28 @@ std::vector<u8> assemble(const std::string& code, Instructions& instructions);
 using InsT = InstructionParamType;
 using InsS = InstructionSignature;
 
-#define INST_TEMPLATE_FULL(NAME, ACTOR, SIZE, CODE, SIGN_NAME, SIGN_COUNT, SIGN_ARR) \
+#define INST_TEMPLATE_FULL(NAME, ACTOR, CODE, SIGN_NAME, SIGN_COUNT, SIGN_ARR) \
 const InsS NAME##_SIGNATURE = { SIGN_NAME, SIGN_COUNT, SIGN_ARR };\
 class NAME : public Instruction\
 {\
 	void act_on(CPU& cpu, MemoryDevice& mem) override{ ACTOR }\
-	const u8 get_size() override{ return SIZE; }\
 	const u8 get_code() override{ return CODE; }\
-	const InstructionSignature get_signature() override{ return NAME##_SIGNATURE; }\
+	const InstructionSignature& get_signature() override{ return NAME##_SIGNATURE; }\
 };
 
-#define INST_TEMPLATE(NAME, ACTOR, SIZE, CODE) \
+#define INST_TEMPLATE(NAME, ACTOR, CODE) \
 class NAME : public Instruction\
 {\
 	void act_on(CPU& cpu, MemoryDevice& mem) override{ ACTOR }\
-	const u8 get_size() override{ return SIZE; }\
 	const u8 get_code() override{ return CODE; }\
-	const InstructionSignature get_signature() override{ return SIGNATURE; }\
+	const InstructionSignature& get_signature() override{ return SIGNATURE; }\
 };
 
 // for adding a basic instruction template only to the instruction shared objects
 #else // INSTRUCTION_MAKER
-	  //
 std::ostream& operator<<(std::ostream& os, const CPU& cpu);
 std::ostream& operator<<(std::ostream& os, const MemoryDevice& mem);
 std::ostream& operator<<(std::ostream& os, const Computer& computer);
-
 
 #endif
 

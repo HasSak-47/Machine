@@ -8,53 +8,60 @@ static u16 new_address(CPU& cpu, MemoryDevice& mem){
 INST_TEMPLATE_FULL(
 	JMP,
 	{ cpu.ptr = new_address(cpu, mem);},
-	1, 0x30,
-	"JMP", 1, {(InsT)(InsT::Word | InsT::Mem)}
+	0x30,
+	"JMP", 1,
+    {(InsT)(InsT::Word | InsT::Mem)}
 )
 
 INST_TEMPLATE_FULL(
 	JMP_EQ,
 	{ if(cpu.cmp == CPU::CMP::EQUAL) cpu.ptr = new_address(cpu, mem);},
-	1, 0x31,
-	"JMP_EQ", 1, {(InsT)(InsT::Word | InsT::Mem)}
+	0x31,
+	"JMP_EQ", 1,
+    {(InsT)(InsT::Word | InsT::Mem)}
 )
 
 INST_TEMPLATE_FULL(
 	JMP_LS,
 	{ if(cpu.cmp == CPU::CMP::LESS) cpu.ptr = new_address(cpu, mem);},
-	1, 0x32,
-	"JMP_LS", 1, {(InsT)(InsT::Word | InsT::Mem)}
+	0x32,
+	"JMP_LS", 1,
+    {(InsT)(InsT::Word | InsT::Mem)}
 )
 
 INST_TEMPLATE_FULL(
 	JMP_BG,
 	{ if(cpu.cmp == CPU::CMP::BIGGER) cpu.ptr = new_address(cpu, mem);},
-	1, 0x33,
-	"JMP_BG", 1, {(InsT)(InsT::Word | InsT::Mem)}
+	0x33,
+	"JMP_BG", 1,
+    {(InsT)(InsT::Word | InsT::Mem)}
 )
 
 INST_TEMPLATE_FULL(
 	JMP_NE,
 	{ if(cpu.cmp != CPU::CMP::EQUAL) cpu.ptr = new_address(cpu, mem);},
-	1, 0x34,
-	"JMP_NE", 1, {(InsT)(InsT::Word | InsT::Mem)}
+	0x34,
+	"JMP_NE", 1,
+    {(InsT)(InsT::Word | InsT::Mem)}
 )
 
 INST_TEMPLATE_FULL(
 	JMP_GE,
 	{ if(cpu.cmp != CPU::CMP::LESS) cpu.ptr = new_address(cpu, mem);},
-	1, 0x35,
-	"JMP_GE", 1, {(InsT)(InsT::Word | InsT::Mem)}
+	0x35,
+	"JMP_GE", 1,
+    {(InsT)(InsT::Word | InsT::Mem)}
 )
 
 INST_TEMPLATE_FULL(
 	JMP_LE,
 	{ if(cpu.cmp != CPU::CMP::BIGGER) cpu.ptr = new_address(cpu, mem);},
-	1, 0x36,
-	"JMP_LE", 1, {(InsT)(InsT::Word | InsT::Mem)}
+	0x36,
+	"JMP_LE", 1,
+    {(InsT)(InsT::Word | InsT::Mem)}
 )
 
-extern "C" void push_instructions(Instructions& instructions){
+extern "C" void push_instruction(Instructions& instructions){
 	instructions.push_back(std::make_unique<JMP>());
 	instructions.push_back(std::make_unique<JMP_EQ>());
 	instructions.push_back(std::make_unique<JMP_LS>());
