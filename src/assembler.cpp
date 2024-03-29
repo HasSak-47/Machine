@@ -72,35 +72,24 @@ public:
 	BaseToken(const std::string& str): name(str), type(UNKNOWN){}
 	virtual void parse(const std::string& str) {};
 	virtual ~BaseToken() = default;
+
+	virtual void print(std::ostream& os){
+	}
 };
 
-InstructionParamType param_t_from_bt_type(BaseToken::Type type){
-	using IPT = InstructionParamType;
-	switch(type){
-		case BaseToken::REGISTER:
-			return (IPT)(IPT::Reg | IPT::Byte);
-		case BaseToken::NUMBER:
-			return (IPT)(IPT::Val | IPT::Byte);
-		case BaseToken::LABEL:
-			return (IPT)(IPT::Mem | IPT::Word);
-		default:
-			return IPT::ERROR;
-	}
-}
-
-std::ostream& operator<<(std::ostream& os, const BaseToken& token){
-	switch(token.type){
+std::ostream& operator<<(std::ostream& os, BaseToken* token){
+	switch(token->type){
 		case BaseToken::REGISTER:
 			os << "\033[1;32m";
 			break;
 		case BaseToken::NUMBER:
 			os << "\033[1;34m";
 			break;
-		case BaseToken::LABEL:
-			os << "\033[1;35m";
-			break;
 		case BaseToken::INSTRUCTION:
 			os << "\033[1;36m";
+			break;
+		case BaseToken::LABEL:
+			os << "\033[1;35m";
 			break;
 		case BaseToken::STRING:
 			os << "\033[1;33m";
@@ -111,7 +100,8 @@ std::ostream& operator<<(std::ostream& os, const BaseToken& token){
 		case BaseToken::UNKNOWN:
 			break;
 	}
-	os << token.name << "\033[0m";
+	token->print(os);
+	os<< "\033[0m";
 	return os;
 }
 
@@ -127,6 +117,10 @@ public:
 		this->name = sub;
 		this->type = BaseToken::LABEL;
 	}
+
+	void print(std::ostream& os) override {
+		os << "." << this->name;
+	};
 };
 
 class StringToken : public BaseToken{
@@ -135,6 +129,10 @@ public:
 		this->name = str;
 		this->type = BaseToken::STRING;
 	}
+
+	void print(std::ostream& os) override {
+		os << "\"" << this->name << "\"";
+	};
 };
 
 class LabelToken : public BaseToken{
@@ -148,6 +146,10 @@ public:
 		this->name = sub;
 		this->type = BaseToken::LABEL;
 	}
+
+	void print(std::ostream& os) override {
+		os << this->name << ":";
+	};
 };
 
 class NumberToken : public BaseToken{
@@ -157,6 +159,10 @@ public:
 		this->name = str;
 		this->type = BaseToken::NUMBER;
 	}
+
+	void print(std::ostream& os) override {
+		os << this->value;
+	};
 };
 
 class RegisterToken : public BaseToken{
@@ -166,6 +172,10 @@ public:
 		this->name = str;
 		this->type = BaseToken::REGISTER;
 	}
+
+	void print(std::ostream& os) override {
+		os << register_names[this->value];
+	};
 };
 
 class InstructionToken : public BaseToken{
@@ -175,21 +185,32 @@ public:
 		this->name = str;
 		this->type = BaseToken::INSTRUCTION;
 	}
+
+	void print(std::ostream& os) override{
+		os << this->name;
+	};
 };
 
-std::ostream& operator<<(std::ostream& os, const InstructionToken& token){
-	os << dynamic_cast<const BaseToken&>(token);
-	for(auto& arg : token.arguments){
-		os << " " << *arg;
-	}
-	return os;
-}
 
 // should probably be a map
 struct InstructionFamily{
 	std::string name;
 	std::vector<std::shared_ptr<Instruction>> instructions;
 };
+
+InstructionParamType param_t_from_bt_type(BaseToken::Type type){
+	using IPT = InstructionParamType;
+	switch(type){
+		case BaseToken::REGISTER:
+			return (IPT)(IPT::Reg | IPT::Byte);
+		case BaseToken::NUMBER:
+			return (IPT)(IPT::Val | IPT::Byte);
+		case BaseToken::LABEL:
+			return (IPT)(IPT::Mem | IPT::Word);
+		default:
+			return IPT::ERROR;
+	}
+}
 
 void match_signature(std::vector<Token>& tokens, InstructionFamily& family, u64 index){
 	Instruction* matched = nullptr;
@@ -212,6 +233,13 @@ void match_signature(std::vector<Token>& tokens, InstructionFamily& family, u64 
 	}
 	if(!matched)
 		throw std::runtime_error("no match found for instruction");
+
+	auto* instruction = new InstructionToken(matched->get_signature().name);
+	u64  params = matched->get_signature().params;
+	instruction->arguments.insert(instruction->arguments.end(), tokens.begin() + index + 1, tokens.begin() + index + 1 + params);
+
+	tokens[index] = std::shared_ptr<BaseToken>(instruction);
+
 }
 
 
@@ -261,7 +289,7 @@ std::vector<Token> expand_sections(std::vector<Token>& tokens, Instructions& ins
 			return family.name == tokens[i]->name;
 		});
 		if(it != instruction_names.end()){
-			tokens[i] = std::make_shared<BaseToken>(tokens[i]->name, BaseToken::INSTRUCTION);
+			tokens[i] = std::make_shared<InstructionToken>(tokens[i]->name);
 		}
 	}
 
@@ -281,10 +309,6 @@ std::vector<Token> expand_sections(std::vector<Token>& tokens, Instructions& ins
 			tokens[i] = std::make_shared<RegisterToken>(tokens[i]->name);
 	}
 
-	// print tokens
-	for(Token& token : tokens){
-		std::cout << *token << std::endl;
-	}
 
 	// match instructions and take arguments
 	for(u64 i = 0; i < tokens.size(); i++){
@@ -299,6 +323,11 @@ std::vector<Token> expand_sections(std::vector<Token>& tokens, Instructions& ins
 			continue;
 		// match instruction
 		match_signature(tokens, *family, i);
+	}
+
+	// print tokens
+	for(Token& token : tokens){
+		std::cout << token << std::endl;
 	}
 
 	return sections;
