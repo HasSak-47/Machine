@@ -499,8 +499,6 @@ std::vector<u8> assemble(const std::string& path, Instructions &instructions){
 			it->instructions.push_back(instruction);
 	}
 
-	std::vector<u8> binary;
-
 	std::ifstream file(path);
 
 	// Read file, and clean lines
@@ -570,6 +568,16 @@ std::vector<u8> assemble(const std::string& path, Instructions &instructions){
 		}
 	}
 
+	if(pos < 0x40){
+		u32 pos2 = 0;
+		for(auto& token: sections[1]->sub_tokens){
+			token->pos = pos2;
+			pos2 += token->get_size();
+		}
+
+	}
+
+	std::vector<u8> binary;
 	for (auto& section : sections){
 		std::cout << section << std::endl;
 		section->write_byte(binary);
