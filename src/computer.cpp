@@ -75,9 +75,7 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 void Computer::run(){
 	while(!cpu.end){
 		cpu.tick(memory, instructions);
-		std::cout << *this << std::endl;
-		// wait until any input
-		std::getchar();
+		// std::getchar();
 	}
 }
 

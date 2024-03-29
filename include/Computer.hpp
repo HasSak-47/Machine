@@ -111,9 +111,10 @@ public:
 	 */
 	const u8 get_size() {
 		let& signature = get_signature();
-		u64 size = signature.params + 1;
-		for(u64 i = 0; i < signature.params; i++)
-			size += signature.args[i] & 0xf0 >> 4;
+		u64 size = 1;
+		for(u64 i = 0; i < signature.params; i++){
+			size += (signature.args[i] & 0xf0) >> 4;
+		}
 		return size;
 	}
 

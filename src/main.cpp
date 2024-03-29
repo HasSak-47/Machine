@@ -41,10 +41,13 @@ int main(){
 	// ram.write(0, (u8*)raw_instructions, sizeof(raw_instructions));
 	Computer computer{ram, {}, std::move(instructions)};
 	std::cout << "reading asm" << std::endl;
-	assemble("code.asm", computer.instructions);
+	auto code = assemble("code.asm", computer.instructions);
 
+	// std::cout << "writing instructions to virtual memory" << std::endl;
+	ram.write(0, code.data(), code.size());
+	std::cout << ram << std::endl;
 	// std::cout << "running computer" << std::endl;
-	// computer.run();
+	computer.run();
 	// std::cout << computer << std::endl;
 	
 	// std::cout << "clearing instructions" << std::endl;

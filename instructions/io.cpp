@@ -22,8 +22,8 @@ static const InsS SIGNATURE = {
  */
 INST_TEMPLATE(NAME, {
 	u64 addr =
-		cpu.registers[mem.read_byte(cpu.ptr + 1)] |	
-		cpu.registers[mem.read_byte(cpu.ptr + 2)] << 8
+		mem.read_byte(cpu.ptr + 1) |	
+		mem.read_byte(cpu.ptr + 2) << 8
 	;
 
 	u64 len = mem.read_byte(cpu.ptr + 4);
@@ -31,6 +31,8 @@ INST_TEMPLATE(NAME, {
 	if(mem.read_byte(cpu.ptr + 3) == 0){
 		for(u64 i = 0; i < len; i++)
 			std::cout << mem.read_byte(addr + i);
+
+		return;
 	}
 
 	if(mem.read_byte(cpu.ptr + 3) == 1){
