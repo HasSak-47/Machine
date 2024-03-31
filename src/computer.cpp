@@ -38,7 +38,6 @@ u64 RAM::get_size() const{
 
 static void run_instruction(Instruction* instruction, CPU& cpu, MemoryDevice& memory){
 	u64 len = instruction->get_size();
-	u8 byte = memory.read_byte(cpu.ptr + 1);
 	instruction->act_on(cpu, memory);
 	cpu.ptr += len;
 }
@@ -54,28 +53,31 @@ void CPU::tick(MemoryDevice& memory, Instructions& instructions){
 	for(auto& instruction : instructions){
 		u8 ins_code = instruction->get_code();
 		if(ins_code == code){
-			// std::string sig = instruction->get_signature().name;
-			// u64 t = sig.find(" ");
-			// if (t != std::string::npos)
-			// 	sig.resize(t);
-			// std::cout << "running instruction: " << sig << " ";
-			// for(u32 i = 1; i <= instruction->get_size(); ++i)
-			// 	std::cout << std::hex << std::setw(2) << std::setfill(' ') << (u64)memory.read_byte(ptr + i) << " ";
-			// std::cout<< std::dec << std::endl;
+			auto& sign = instruction->get_signature();
+			std::string sig = sign.name;
+			u64 t = sig.find(" ");
+			if (t != std::string::npos)
+				sig.resize(t);
+			std::cout << std::hex << std::setw(2) << std::setfill(' ') ;
+			std::cout << "running instruction: [" << std::setw(2) << std::setfill(' ') << (u32)ins_code << "]" << sig << " ";
+			for(u32 i = 1; i <= instruction->get_size() - 1; ++i)
+				std::cout << std::setw(2) << std::setfill(' ')<< (u64)memory.read_byte(ptr + i) << " ";
+			std::cout<< std::dec << std::endl;
 
 			run_instruction(instruction.get(), *this, memory);
 			return;
 		}
 	}
 
-	std::cout << "instruction not found: " << (u64)code << std::endl;
+	std::cout << "instruction not found: " << std::hex << (u64)code << std::endl;
 	end = true;
 }
 
 void Computer::run(){
 	while(!cpu.end){
+		std::cout << *this << '\n';
 		cpu.tick(memory, instructions);
-		// std::getchar();
+		std::getchar();
 	}
 }
 
@@ -84,7 +86,7 @@ std::ostream& operator<<(std::ostream& os, const CPU& cpu){
 	os << "CPU: " << std::endl;
 	os << "count: " << cpu.count << std::endl;
 	os << "end: " << cpu.end << std::endl;
-	os << "ptr: " << cpu.ptr << std::endl;
+	os << "ptr: " << std::hex << cpu.ptr << std::endl;
 	auto c = (
 		cpu.cmp == CPU::CMP::EQUAL? 
 		   "EQ":
@@ -104,7 +106,19 @@ std::ostream& operator<<(std::ostream& os, const CPU& cpu){
 std::ostream& operator<<(std::ostream& os, const MemoryDevice& mem){
 	os << "RAM: " << std::endl;
 	os << "size: " << mem.get_size() << std::endl;
+	os << "x" << " | ";
+	for (u64 i = 0; i < 16; ++i){
+		os << std::hex << std::setw(2) << std::setfill(' ');
+		os << i << " ";
+	} os << std::endl;
+	os << "--|";
+	for (u64 i = 0; i < 16; ++i){
+		os << "---";
+	} os<<std::endl;
 	for (u64 i = 0; i < mem.get_size(); ++i){
+		if (i % 16 == 0){
+			os << i / 16 << " | ";
+		}
 		os << std::hex << std::setw(2) << std::setfill(' ');
 		os << (u64)mem.read_byte(i) << " ";
 

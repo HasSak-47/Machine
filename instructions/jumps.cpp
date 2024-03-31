@@ -1,73 +1,112 @@
 #define INSTRUCTION_MAKER
 #include <Computer.hpp>
 
-static u16 new_address(CPU& cpu, MemoryDevice& mem){
-	return mem.read_byte(cpu.ptr + 1) | (mem.read_byte(cpu.ptr + 2) << 8);
+const InsS JMP_SIG = {
+	.name = "JMP",
+	.params = 1,
+	.args = {
+		(InsT)(InsT::Word | InsT::Mem),
+	},
+};
+
+const InsS JEQ_SIG = {
+	.name = "JEQ",
+	.params = 1,
+	.args = {
+		(InsT)(InsT::Word | InsT::Mem),
+	},
+};
+
+const InsS JLS_SIG = {
+	.name = "JLS",
+	.params = 1,
+	.args = {
+		(InsT)(InsT::Word | InsT::Mem),
+	},
+};
+
+const InsS JGR_SIG = {
+	.name = "JBG",
+	.params = 1,
+	.args = {
+		(InsT)(InsT::Word | InsT::Mem),
+	},
+};
+
+const InsS JNE_SIG = {
+	.name = "JNE",
+	.params = 1,
+	.args = {
+		(InsT)(InsT::Word | InsT::Mem),
+	},
+};
+
+const InsS JGE_SIG = {
+	.name = "JGE",
+	.params = 1,
+	.args = {
+		(InsT)(InsT::Word | InsT::Mem),
+	},
+};
+
+const InsS JLE_SIG = {
+	.name = "JLE",
+	.params = 1,
+	.args = {
+		(InsT)(InsT::Word | InsT::Mem),
+	},
+};
+
+class JUMP_BASE : public Instruction{
+public:
+	virtual bool evaluate(CPU& cpu, MemoryDevice& mem) = 0;
+
+	void act_on(CPU& cpu, MemoryDevice& mem) override{
+		if(evaluate(cpu, mem))
+			cpu.ptr = new_address(cpu, mem);
+	}
+
+	u8 new_address(CPU& cpu, MemoryDevice& mem){
+		u16 v = mem.read_byte(cpu.ptr + 1) | (mem.read_byte(cpu.ptr + 2) << 8);
+		return v - this->get_size();
+	}
+};
+
+#define IMPL_JUMP(NAME, CODE, EVALUATOR) \
+class NAME : public JUMP_BASE{\
+	bool evaluate(CPU& cpu, MemoryDevice& mem) override{\
+		EVALUATOR\
+	}\
+\
+	const InsS& get_signature() override{ return NAME##_SIG; }\
+	const u8 get_code() override{ return CODE; }\
+};
+
+using CCMP = CPU::CMP;
+
+static bool is_flag_set(CPU& cpu, CCMP flag){
+	return (u8)cpu.cmp & (u8)flag;
 }
 
-INST_TEMPLATE_FULL(
-	JMP,
-	{ cpu.ptr = new_address(cpu, mem);},
-	0x30,
-	"JMP", 1,
-    {(InsT)(InsT::Word | InsT::Mem)}
-)
 
-INST_TEMPLATE_FULL(
-	JMP_EQ,
-	{ if(cpu.cmp == CPU::CMP::EQUAL) cpu.ptr = new_address(cpu, mem);},
-	0x31,
-	"JEQ", 1,
-    {(InsT)(InsT::Word | InsT::Mem)}
-)
+IMPL_JUMP(JMP, 0x40, {return true;});
 
-INST_TEMPLATE_FULL(
-	JMP_LS,
-	{ if(cpu.cmp == CPU::CMP::LESS) cpu.ptr = new_address(cpu, mem);},
-	0x32,
-	"JLS", 1,
-    {(InsT)(InsT::Word | InsT::Mem)}
-)
+IMPL_JUMP(JEQ, 0x41, {return is_flag_set(cpu, CCMP::EQ);});
+IMPL_JUMP(JLS, 0x42, {return is_flag_set(cpu, CCMP::LS);});
+IMPL_JUMP(JGR, 0x43, {return is_flag_set(cpu, CCMP::GR);});
 
-INST_TEMPLATE_FULL(
-	JMP_BG,
-	{ if(cpu.cmp == CPU::CMP::BIGGER) cpu.ptr = new_address(cpu, mem);},
-	0x33,
-	"JBG", 1,
-    {(InsT)(InsT::Word | InsT::Mem)}
-)
+IMPL_JUMP(JNE, 0x44, {return !is_flag_set(cpu, CCMP::EQ);});
+IMPL_JUMP(JLE, 0x45, {return !is_flag_set(cpu, CCMP::LS);});
+IMPL_JUMP(JGE, 0x46, {return !is_flag_set(cpu, CCMP::GR);});
 
-INST_TEMPLATE_FULL(
-	JMP_NE,
-	{ if(cpu.cmp != CPU::CMP::EQUAL) cpu.ptr = new_address(cpu, mem);},
-	0x34,
-	"JNE", 1,
-    {(InsT)(InsT::Word | InsT::Mem)}
-)
-
-INST_TEMPLATE_FULL(
-	JMP_GE,
-	{ if(cpu.cmp != CPU::CMP::LESS) cpu.ptr = new_address(cpu, mem);},
-	0x35,
-	"JGE", 1,
-    {(InsT)(InsT::Word | InsT::Mem)}
-)
-
-INST_TEMPLATE_FULL(
-	JMP_LE,
-	{ if(cpu.cmp != CPU::CMP::BIGGER) cpu.ptr = new_address(cpu, mem);},
-	0x36,
-	"JLE", 1,
-    {(InsT)(InsT::Word | InsT::Mem)}
-)
 
 extern "C" void push_instruction(Instructions& instructions){
 	instructions.push_back(std::make_unique<JMP>());
-	instructions.push_back(std::make_unique<JMP_EQ>());
-	instructions.push_back(std::make_unique<JMP_LS>());
-	instructions.push_back(std::make_unique<JMP_BG>());
-	instructions.push_back(std::make_unique<JMP_NE>());
-	instructions.push_back(std::make_unique<JMP_GE>());
-	instructions.push_back(std::make_unique<JMP_LE>());
+	instructions.push_back(std::make_unique<JEQ>());
+	instructions.push_back(std::make_unique<JLS>());
+	instructions.push_back(std::make_unique<JGR>());
+	instructions.push_back(std::make_unique<JNE>());
+	instructions.push_back(std::make_unique<JLE>());
+	instructions.push_back(std::make_unique<JGE>());
 }
 

@@ -1,10 +1,20 @@
 section .text:
 _start:
-	IO msg 0 14
-	IO local 1 10
-	IO local 0 10
+	MOV r0 0
+	MOV r1 a
+_while:
+	CMP
+	JEQ _end
+	MOV r3 r1
+	MOV r1 1
+	ADD
+	MOV r0 r2
+	MOV r1 r3
+	JMP _while
+
+
+_end:
 	END
 
 section .data:
-	msg: "hello world!" 10 0
-	local: 0
+	holder: fa

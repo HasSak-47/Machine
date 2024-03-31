@@ -45,9 +45,9 @@ public:
 	u64 count = 0;
 	bool end = false;
 	enum class CMP: u8{
-		BIGGER,
-		EQUAL,
-		LESS,
+		GR,
+		EQ,
+		LS,
 	} cmp;
 	u8 registers[16] = {};
 	u64 ptr = 0;
@@ -84,6 +84,7 @@ enum InstructionParamType : u8{
 	ERROR = 0xff,
 };
 
+
 struct InstructionSignature{
 	const char* name;
 	const size_t params;
@@ -105,6 +106,7 @@ public:
 	 */
 	virtual const InstructionSignature& get_signature() = 0;
 	virtual const u8 get_code() = 0;
+	virtual const bool move() { return true; }
 
 	/**
 	 * @return the size of the instruction in bytes

@@ -1,3 +1,4 @@
+#include <cstdio>
 #define INSTRUCTION_MAKER
 #include <Computer.hpp>
 #include <iostream>
@@ -36,11 +37,12 @@ INST_TEMPLATE(NAME, {
 	}
 
 	if(mem.read_byte(cpu.ptr + 3) == 1){
-		std::string str;
-		std::cin >> str;
-
-		for(u64 i = 0; i < len; i++)
-			mem.write_byte(addr + i, i < str.size() ? str[i] : 0);
+		for(u64 i = 0; i < len; i++){
+			char c = std::getchar();
+			if(c == '\n')
+				break;
+			mem.write_byte(addr + i, c);
+		}
 	}
 
 }, 0x80)

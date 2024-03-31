@@ -15,8 +15,8 @@ const InsS MOV_MR_SIG = {
 	.name = "MOV",
 	.params = 2,
 	.args = {
-		(InsT)(InsT::Reg | InsT::Byte),
 		(InsT)(InsT::Mem | InsT::Word),
+		(InsT)(InsT::Reg | InsT::Byte),
 	},
 };
 

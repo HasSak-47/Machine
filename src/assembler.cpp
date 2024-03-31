@@ -18,7 +18,6 @@ const char* register_names[] = {
 	"rc", "rd", "re", "rf",
 };
 
-
 static std::string clean_string(const std::string str){
 	std::string buffer = str;
 
@@ -187,7 +186,7 @@ public:
 		this->name = str;
 		this->type = BaseToken::NUMBER;
 		try{
-			this->value = std::stoi(str);
+			this->value = std::stoi(str, nullptr, 16);
 		}
 		catch(std::exception& e){
 			std::cout << "failed to convert number: " << str << std::endl;
@@ -212,6 +211,7 @@ public:
 	u8 value;
 	RegisterToken(const std::string& str){
 		this->name = str;
+		this->value = std::stoi(str.substr(1), 0, 16);
 		this->type = BaseToken::REGISTER;
 	}
 
@@ -534,22 +534,12 @@ std::vector<u8> assemble(const std::string& path, Instructions &instructions){
 		}
 	}
 
-	// print sections
-	for(auto& section : sections){
-		std::cout << "Printing section: " << section->name << std::endl;
-		std::cout << section << std::endl;
-	}
-
 	std::vector<std::shared_ptr<LabelToken>> labels;
 	for(auto& section : sections)
 		locate_labels(section->sub_tokens, labels);
 
 	for(auto& section : sections)
 		set_labels(section->sub_tokens, labels);
-
-	std::cout << "labels:" << std::endl;
-	for(auto& label : labels)
-		std::cout << label->name << std::endl;
 
 	for(auto& section : sections)
 		expand_sections(section->sub_tokens, instructions, labels, instruction_names);
@@ -568,18 +558,10 @@ std::vector<u8> assemble(const std::string& path, Instructions &instructions){
 		}
 	}
 
-	if(pos < 0x40){
-		u32 pos2 = 0;
-		for(auto& token: sections[1]->sub_tokens){
-			token->pos = pos2;
-			pos2 += token->get_size();
-		}
-
-	}
 
 	std::vector<u8> binary;
-	for (auto& section : sections){
-		std::cout << section << std::endl;
+	for(auto& section : sections){
+		std::cout << section;
 		section->write_byte(binary);
 	}
 
