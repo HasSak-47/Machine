@@ -6,7 +6,7 @@ OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
 CXX := g++
 CXXFLAGS := -g -I include -export-dynamic
 
-run : link
+run : all
 	./VM
 
 link: source

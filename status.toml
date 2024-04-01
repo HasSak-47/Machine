@@ -1,4 +1,29 @@
 [project]
 name = "vm_cpp"
-version = "0.0.0"
+version = "1.0.0"
 edition = "0.1.0"
+
+[[todo]]
+name = "Add README.md"
+priority = 0.5
+difficulty = 0.2
+
+[[todo]]
+name = "Add more instructions"
+priority = 0.1
+difficulty = 0.1
+
+[[todo]]
+name = "Finish MOV assembler"
+priority = 0.1
+difficulty = 0.1
+
+[[todo]]
+name = "Make some basic arguments for the exe"
+priority = 0.4
+difficulty = 0.3
+
+[[done]]
+name = "Basic 8bit Computer"
+priority = 0.9
+difficulty = 0.9

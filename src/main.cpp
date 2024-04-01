@@ -5,9 +5,15 @@
 #include <Computer.hpp>
 #include <dlfcn.h>
 
+#include <logger.hpp>
+
 #define LOAD_INSTRUCTIONS
 
+
 int main(){
+	wlog::Write write;
+	write.add("stdout", std::make_unique<wlog::Logger>());
+	write.add("stderr", std::make_unique<wlog::Logger>());
 	Instructions instructions;
 	std::vector<void*> handles;
 
@@ -17,7 +23,7 @@ int main(){
 		auto path = entry.path();
 		auto handle = dlopen(path.c_str(), RTLD_LAZY);
 		if (!handle){
-			std::cerr << "dlopen failed: " << dlerror() << std::endl;
+			write["stderr"].write("dlopen failed: {}\n", dlerror());
 			continue;
 		}
 		// std::cout << "loading: " << path << std::endl;

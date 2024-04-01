@@ -88,9 +88,9 @@ std::ostream& operator<<(std::ostream& os, const CPU& cpu){
 	os << "end: " << cpu.end << std::endl;
 	os << "ptr: " << std::hex << cpu.ptr << std::endl;
 	auto c = (
-		cpu.cmp == CPU::CMP::EQUAL? 
+		cpu.cmp == CPU::CMP::EQ? 
 		   "EQ":
-		cpu.cmp == CPU::CMP::LESS? 
+		cpu.cmp == CPU::CMP::LS? 
 			"LS":
 			"BG"
 		);
