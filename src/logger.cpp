@@ -3,9 +3,11 @@
 
 using namespace wlog;
 
-class Logger : public Writter{
-public:
-	void log(const std::string message) override{
+void Stdout::log(const std::string message) {
+	std::cout << message << std::endl;
+}
+
+void Debug::log(const std::string message) {
+	if (debug)
 		std::cout << message << std::endl;
-	}
-};
+}

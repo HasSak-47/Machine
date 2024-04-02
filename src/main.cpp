@@ -8,12 +8,12 @@
 #include <logger.hpp>
 
 #define LOAD_INSTRUCTIONS
-
+wlog::Write write;
 
 int main(){
-	wlog::Write write;
-	write.add("stdout", std::make_unique<wlog::Logger>());
-	write.add("stderr", std::make_unique<wlog::Logger>());
+	write.add("stdout", std::make_unique<wlog::Stdout>());
+	write.add("stderr", std::make_unique<wlog::Stdout>());
+	write.add("debug", std::make_unique<wlog::Debug>());
 	Instructions instructions;
 	std::vector<void*> handles;
 
@@ -30,7 +30,7 @@ int main(){
 
 		auto add_instruction = (PushInstructionFunc)dlsym(handle, "push_instruction");
 		if (!add_instruction){
-			std::cerr << "dlsym failed: " << dlerror() << std::endl;
+			write["stderr"].write("dlopen failed: {}\n", dlerror());
 			dlclose(handle);
 			continue;
 		}
