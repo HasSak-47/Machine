@@ -1,14 +1,12 @@
 #include "generic.hpp"
 #include <Computer.hpp>
 #include <algorithm>
-#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <sstream>
-#include <unordered_map>
 #include <vector>
 
 const char* register_names[] = {

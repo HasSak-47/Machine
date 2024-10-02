@@ -14,15 +14,15 @@ static const InsS SIGNATURE = {
  */
 INST_TEMPLATE(NAME, {
 	if(cpu.registers[0] == cpu.registers[1]){
-		cpu.cmp = CPU::CMP::EQUAL;
+		cpu.cmp = CPU::CMP::EQ;
 	}
 	else
 	if(cpu.registers[0] < cpu.registers[1]){
-		cpu.cmp = CPU::CMP::LESS;
+		cpu.cmp = CPU::CMP::LS;
 	}
 	else
 	if(cpu.registers[0] < cpu.registers[1]) {
-		cpu.cmp = CPU::CMP::BIGGER;
+		cpu.cmp = CPU::CMP::GR;
 	}
 }, 0x20)
 

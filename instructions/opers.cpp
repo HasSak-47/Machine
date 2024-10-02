@@ -21,10 +21,10 @@ class NAME : public Instruction{ \
  * adds the contents of reg 0 to reg 1 and stores the result in reg 2
  */
 
-MAKE_OPER(ADD, 0x10, +)
-MAKE_OPER(SUB, 0x11, -)
-MAKE_OPER(MUL, 0x12, *)
-MAKE_OPER(DIV, 0x13, /)
+MAKE_OPER(ADD, 0x10, +);
+MAKE_OPER(SUB, 0x11, -);
+MAKE_OPER(MUL, 0x12, *);
+MAKE_OPER(DIV, 0x13, /);
 
 extern "C"{
 	void push_instruction(Instructions* i){
