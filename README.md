@@ -17,10 +17,10 @@ cleaning the build:
 - **include**: Contains the header files of the virtual machine and the assembler.
 - **src**: Contains the source code of the virtual machine and the assembler.
     - **main.cpp**: The main file of the virtual machine.
-        - the main function first loads the instructions from the shared libraries.
-        - then the code.asm file is compiled into the binary code.
-        - then the binary code is executed.
+        - The main function first loads the instructions from the shared libraries.
+        - The code.asm file is compiled into the binary code.
+        - The binary code is executed.
     - **assembler.cpp**: The assembler that is used to compile the assembly code into the binary code.
     - **computer.cpp**: The virtual machine that is used to execute the binary code.
-- **instructions**: contains the instructions of the virtual machine. that can be used in the assembly code. each of this files will be compiled into a shared library. and loaded into the virtual machine.
+- **instructions**: Contains the instructions of the virtual machine. That can be used in the assembly code. Each file will be compiled into a shared library, and loaded into the virtual machine.
 - **code.asm**: The assembly code that will be executed by the virtual machine.

@@ -43,7 +43,6 @@ static void run_instruction(Instruction* instruction, CPU& cpu, MemoryDevice& me
 }
 
 void CPU::tick(MemoryDevice& memory, Instructions& instructions){
-	// std::cout << "in cycle: " << this->count++ << std::endl;
 	u8 code = memory.read_byte(ptr);
 	if(code == 255){
 		end = true;
